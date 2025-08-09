@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการข้อมูลลูกค้าแว่นตา</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        /* Custom styles for pastel-themed form with aligned columns */
+        .form-label {
+            color: #6B7280; /* Soft gray-blue for labels */
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .form-input, .form-textarea {
+            background-color: #FDFDFD; /* Off-white background */
+            border: 2px solid #A3BFFA; /* Pastel blue border */
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            width: 100%; /* Ensure inputs fill their grid cell */
+            box-sizing: border-box;
+        }
+        .form-input:focus, .form-textarea:focus {
+            border-color: #7F9CF5; /* Slightly darker pastel blue on focus */
+            box-shadow: 0 0 0 3px rgba(127, 156, 245, 0.3);
+            outline: none;
+        }
+        .form-section {
+            background-color: #F3F4F6; /* Light pastel gray background */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .form-section h3 {
+            color: #4B5563; /* Darker gray for section titles */
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: #9CA3AF; /* Light gray for placeholders */
+        }
+        /* Alternate border colors for visual distinction */
+        .form-input:nth-child(odd) {
+            border-color: #FBB6CE; /* Pastel pink for odd inputs */
+        }
+        .form-input:nth-child(odd):focus {
+            border-color: #F687B3; /* Slightly darker pastel pink on focus */
+            box-shadow: 0 0 0 3px rgba(246, 135, 179, 0.3);
+        }
+        .form-input:nth-child(even) {
+            border-color: #B5EAD7; /* Pastel green for even inputs */
+        }
+        .form-input:nth-child(even):focus {
+            border-color: #68D391; /* Slightly darker pastel green on focus */
+            box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.3);
+        }
+        .modal-content {
+            background-color: #FFFFFF;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        /* Grid for consistent column alignment */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .form-grid-1 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Preloader -->
+    <div id="preloader" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">ระบบจัดการข้อมูลลูกค้าแว่นตา</h1>
+
+        <!-- Add Customer Button -->
+        <button id="addCustomerBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg mb-6 hover:bg-blue-600">เพิ่มข้อมูลลูกค้า</button>
+
+        <!-- Customer Table -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-สกุล</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทลูกค้า</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เพศ</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุ</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTable" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">เพศ</h2>
+                <canvas id="genderChart"></canvas>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">ประเภทลูกค้า</h2>
+                <canvas id="customerTypeChart"></canvas>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">จำนวนข้อมูล</h2>
+                <canvas id="totalRecordsChart"></canvas>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">ช่วงอายุ</h2>
+                <canvas id="ageRangeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="customerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="modal-content p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+            <h2 id="modalTitle" class="text-2xl font-bold text-blue-600 mb-4">เพิ่มข้อมูลลูกค้า</h2>
+            <form id="customerForm">
+                <!-- Member Information -->
+                <div class="form-section">
+                    <h3>ข้อมูลสมาชิก</h3>
+                    <div class="form-grid-1">
+                        <div class="form-field">
+                            <label class="form-label">ประเภทลูกค้า</label>
+                            <input type="text" name="customer_type" class="form-input" placeholder="เช่น สมาชิก, ใหม่">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="form-section">
+                    <h3>ข้อมูลลูกค้า</h3>
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label">วันเดือนปีเกิด</label>
+                            <input type="date" name="birth_date" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ชื่อ</label>
+                            <input type="text" name="first_name" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">สกุล</label>
+                            <input type="text" name="last_name" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">อายุ</label>
+                            <input type="number" name="age" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">เพศ</label>
+                            <input type="text" name="gender" class="form-input" placeholder="เช่น ชาย, หญิง">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">หมายเลขโทรศัพท์</label>
+                            <input type="text" name="phone" class="form-input">
+                        </div>
+                        <div class="form-field col-span-2">
+                            <label class="form-label">ที่อยู่</label>
+                            <textarea name="address" class="form-textarea"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- O.D[R] -->
+                <div class="form-section">
+                    <h3>O.D[R]</h3>
+                    <div class="form-grid-3">
+                        <div class="form-field">
+                            <label class="form-label">Sphere</label>
+                            <input type="text" name="od_r_sphere" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">CYL</label>
+                            <input type="text" name="od_r_cyl" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">AXIS</label>
+                            <input type="text" name="od_r_axis" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ADD</label>
+                            <input type="text" name="od_r_add" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">DPD</label>
+                            <input type="text" name="od_r_dpd" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">NPD</label>
+                            <input type="text" name="od_r_npd" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">SegHT</label>
+                            <input type="text" name="od_r_seght" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Prism</label>
+                            <input type="text" name="od_r_prism" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">MONO-VA</label>
+                            <input type="text" name="od_r_mono_va" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- O.D[L] -->
+                <div class="form-section">
+                    <h3>O.D[L]</h3>
+                    <div class="form-grid-3">
+                        <div class="form-field">
+                            <label class="form-label">Sphere</label>
+                            <input type="text" name="od_l_sphere" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">CYL</label>
+                            <input type="text" name="od_l_cyl" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">AXIS</label>
+                            <input type="text" name="od_l_axis" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ADD</label>
+                            <input type="text" name="od_l_add" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">DPD</label>
+                            <input type="text" name="od_l_dpd" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">NPD</label>
+                            <input type="text" name="od_l_npd" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">SegHT</label>
+                            <input type="text" name="od_l_seght" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Prism</label>
+                            <input type="text" name="od_l_prism" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">MONO-VA</label>
+                            <input type="text" name="od_l_mono_va" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lens Information -->
+                <div class="form-section">
+                    <h3>ข้อมูลเลนส์</h3>
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label">VA Both eyes (OU)</label>
+                            <input type="text" name="va_ou" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">เลนส์เดิม R</label>
+                            <input type="text" name="lens_old_r" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">เลนส์เดิม L</label>
+                            <input type="text" name="lens_old_l" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primary Rx -->
+                <div class="form-section">
+                    <h3>Primary Rx</h3>
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label">Material Index</label>
+                            <input type="text" name="material_index" class="form-input" placeholder="เช่น CR39, 1.56, 1.6, 1.67, 1.74, PC, HIVEX, Other">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Option</label>
+                            <input type="text" name="lens_option" class="form-input" placeholder="เช่น Clear Lens, UV420, Photochromic, Transition, Other">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Lens Design</label>
+                            <input type="text" name="lens_design" class="form-input" placeholder="เช่น Single Vision, Bifocal, Trifocal, Progressive">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Lens Type</label>
+                            <textarea name="lens_type" class="form-textarea"></textarea>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ทำสี (Tint)</label>
+                            <input type="text" name="tint" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">เดิม</label>
+                            <input type="text" name="original" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ไล่สี</label>
+                            <input type="text" name="gradient" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Treatment (เคลือบ)</label>
+                            <input type="text" name="treatment" class="form-input" placeholder="เช่น UC, HC, HMC, SuperHMC">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Wear Type</label>
+                            <input type="text" name="wear_type" class="form-input" placeholder="เช่น ตลอดเวลา, มองไกล, มองใกล้, ระยะคอมพิวเตอร์, กันแดด">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frame Structure -->
+                <div class="form-section">
+                    <h3>โครงสร้างแว่น</h3>
+                    <div class="form-grid-3">
+                        <div class="form-field">
+                            <label class="form-label">BVD</label>
+                            <input type="text" name="bvd" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">PTA</label>
+                            <input type="text" name="pta" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">Wrap</label>
+                            <input type="text" name="wrap" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">BCL</label>
+                            <input type="text" name="bcl" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">คาน</label>
+                            <input type="text" name="bridge" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">สูง</label>
+                            <input type="text" name="height" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">กว้าง</label>
+                            <input type="text" name="width" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ทะแยง</label>
+                            <input type="text" name="diagonal" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ลักษณะเข้ากรอบ</label>
+                            <input type="text" name="frame_type" class="form-input" placeholder="เช่น เต็ม, เซาะ, เจาะ">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eyeglass Order -->
+                <div class="form-section">
+                    <h3>รายการแว่น</h3>
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label">ยี่ห้อแว่น</label>
+                            <input type="text" name="brand" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">รุ่น</label>
+                            <input type="text" name="model" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">หมายเหตุ</label>
+                            <input type="text" name="notes" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ราคาแว่น</label>
+                            <input type="number" name="frame_price" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ราคาเลนส์</label>
+                            <input type="number" name="lens_price" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ส่วนลด</label>
+                            <input type="number" name="discount" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ยอดรวม</label>
+                            <input type="number" name="total" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ชำระ</label>
+                            <input type="number" name="paid" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ผู้ตรวจสายตา</label>
+                            <input type="text" name="examiner" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">ผู้สั่งซื้อ</label>
+                            <input type="text" name="buyer" class="form-input">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label">คงค้าง</label>
+                            <input type="number" name="outstanding" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Buttons -->
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">ยกเลิก</button>
+                    <button type="submit" id="submitBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const EDGE_FUNCTION_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('preloader').classList.remove('hidden');
+            await loadCustomers();
+            initializeCharts();
+            document.getElementById('preloader').classList.add('hidden');
+        });
+
+        // Modal and Form Handling
+        const modal = document.getElementById('customerModal');
+        const form = document.getElementById('customerForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const addCustomerBtn = document.getElementById('addCustomerBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        let editingCustomerId = null;
+
+        addCustomerBtn.addEventListener('click', () => {
+            modalTitle.textContent = 'เพิ่มข้อมูลลูกค้า';
+            form.reset();
+            editingCustomerId = null;
+            modal.classList.remove('hidden');
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            form.reset();
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            Swal.fire({
+                title: 'กำลังบันทึก...',
+                didOpen: () => Swal.showLoading(),
+                allowOutsideClick: false
+            });
+
+            const formData = new FormData(form);
+            const customer = {
+                customer_type: formData.get('customer_type'),
+                birth_date: formData.get('birth_date'),
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                age: parseInt(formData.get('age')) || 0,
+                gender: formData.get('gender'),
+                phone: formData.get('phone'),
+                address: formData.get('address'),
+                od_r_sphere: formData.get('od_r_sphere'),
+                od_r_cyl: formData.get('od_r_cyl'),
+                od_r_axis: formData.get('od_r_axis'),
+                od_r_add: formData.get('od_r_add'),
+                od_r_dpd: formData.get('od_r_dpd'),
+                od_r_npd: formData.get('od_r_npd'),
+                od_r_seght: formData.get('od_r_seght'),
+                od_r_prism: formData.get('od_r_prism'),
+                od_r_mono_va: formData.get('od_r_mono_va'),
+                od_l_sphere: formData.get('od_l_sphere'),
+                od_l_cyl: formData.get('od_l_cyl'),
+                od_l_axis: formData.get('od_l_axis'),
+                od_l_add: formData.get('od_l_add'),
+                od_l_dpd: formData.get('od_l_dpd'),
+                od_l_npd: formData.get('od_l_npd'),
+                od_l_seght: formData.get('od_l_seght'),
+                od_l_prism: formData.get('od_l_prism'),
+                od_l_mono_va: formData.get('od_l_mono_va'),
+                va_ou: formData.get('va_ou'),
+                lens_old_r: formData.get('lens_old_r'),
+                lens_old_l: formData.get('lens_old_l'),
+                material_index: formData.get('material_index'),
+                lens_option: formData.get('lens_option'),
+                lens_design: formData.get('lens_design'),
+                lens_type: formData.get('lens_type'),
+                tint: formData.get('tint'),
+                original: formData.get('original'),
+                gradient: formData.get('gradient'),
+                treatment: formData.get('treatment'),
+                wear_type: formData.get('wear_type'),
+                bvd: formData.get('bvd'),
+                pta: formData.get('pta'),
+                wrap: formData.get('wrap'),
+                bcl: formData.get('bcl'),
+                bridge: formData.get('bridge'),
+                height: formData.get('height'),
+                width: formData.get('width'),
+                diagonal: formData.get('diagonal'),
+                frame_type: formData.get('frame_type'),
+                brand: formData.get('brand'),
+                model: formData.get('model'),
+                notes: formData.get('notes'),
+                frame_price: parseFloat(formData.get('frame_price')) || 0,
+                lens_price: parseFloat(formData.get('lens_price')) || 0,
+                discount: parseFloat(formData.get('discount')) || 0,
+                total: parseFloat(formData.get('total')) || 0,
+                paid: parseFloat(formData.get('paid')) || 0,
+                examiner: formData.get('examiner'),
+                buyer: formData.get('buyer'),
+                outstanding: parseFloat(formData.get('outstanding')) || 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(EDGE_FUNCTION_URL, {
+                    method: editingCustomerId ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: editingCustomerId, customer })
+                });
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('Response is not JSON:', text);
+                    throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                }
+                if (!response.ok) throw new Error(result.error || `HTTP error ${response.status}`);
+                
+                Swal.fire('สำเร็จ', editingCustomerId ? 'แก้ไขข้อมูลลูกค้าสำเร็จ' : 'บันทึกข้อมูลลูกค้าสสำเร็จ', 'success');
+                modal.classList.add('hidden');
+                form.reset();
+                await loadCustomers();
+                initializeCharts();
+            } catch (error) {
+                console.error('Form submission error:', error);
+                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการบันทึกข้อมูล: ${error.message}`, 'error');
+            }
+        });
+
+        async function loadCustomers() {
+            Swal.fire({
+                title: 'กำลังโหลด...',
+                didOpen: () => Swal.showLoading(),
+                allowOutsideClick: false
+            });
+
+            try {
+                const response = await fetch(EDGE_FUNCTION_URL, { method: 'GET' });
+                const text = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('Response is not JSON:', text);
+                    throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                }
+                const { data, error } = result;
+                if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
+                
+                const tableBody = document.getElementById('customerTable');
+                tableBody.innerHTML = '';
+                data.forEach(customer => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${customer.first_name} ${customer.last_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${customer.customer_type}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${customer.gender}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${customer.age}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button class="editBtn text-blue-600 hover:underline" data-id="${customer.id}">แก้ไข</button>
+                            <button class="deleteBtn text-red-600 hover:underline" data-id="${customer.id}">ลบ</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                document.querySelectorAll('.editBtn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.getAttribute('data-id');
+                        try {
+                            const response = await fetch(`${EDGE_FUNCTION_URL}?id=${id}`, { method: 'GET' });
+                            const text = await response.text();
+                            let result;
+                            try {
+                                result = JSON.parse(text);
+                            } catch (parseError) {
+                                console.error('Response is not JSON:', text);
+                                throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                            }
+                            const { data, error } = result;
+                            if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
+                            
+                            editingCustomerId = data.id;
+                            modalTitle.textContent = 'แก้ไขข้อมูลลูกค้า';
+                            for (const [key, value] of Object.entries(data)) {
+                                const input = form.querySelector(`[name="${key}"]`);
+                                if (input) input.value = value || '';
+                            }
+                            modal.classList.remove('hidden');
+                        } catch (error) {
+                            console.error('Edit customer error:', error);
+                            Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}`, 'error');
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.deleteBtn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.getAttribute('data-id');
+                        Swal.fire({
+                            title: 'ยืนยันการลบ?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'ลบ',
+                            cancelButtonText: 'ยกเลิก'
+                        }).then(async (result) => {
+                            if (result.isConfirmed) {
+                                try {
+                                    const response = await fetch(EDGE_FUNCTION_URL, {
+                                        method: 'DELETE',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id })
+                                    });
+                                    const text = await response.text();
+                                    let result;
+                                    try {
+                                        result = JSON.parse(text);
+                                    } catch (parseError) {
+                                        console.error('Response is not JSON:', text);
+                                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                                    }
+                                    const { error } = result;
+                                    if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
+                                    
+                                    Swal.fire('ลบสำเร็จ', 'ข้อมูลถูกลบเรียบร้อย', 'success');
+                                    await loadCustomers();
+                                    initializeCharts();
+                                } catch (error) {
+                                    console.error('Delete customer error:', error);
+                                    Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการลบข้อมูล: ${error.message}`, 'error');
+                                }
+                            }
+                        });
+                    });
+                });
+
+                Swal.close();
+            } catch (error) {
+                console.error('Load customers error:', error);
+                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}`, 'error');
+            }
+        }
+
+        function initializeCharts() {
+            fetch(EDGE_FUNCTION_URL, { method: 'GET' })
+                .then(async response => {
+                    const text = await response.text();
+                    let result;
+                    try {
+                        result = JSON.parse(text);
+                    } catch (parseError) {
+                        console.error('Response is not JSON:', text);
+                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                    }
+                    const { data, error } = result;
+                    if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
+                    return data;
+                })
+                .then(data => {
+                    // Gender Chart
+                    new Chart(document.getElementById('genderChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['ชาย', 'หญิง'],
+                            datasets: [{
+                                data: [
+                                    data.filter(c => c.gender === 'ชาย').length,
+                                    data.filter(c => c.gender === 'หญิง').length
+                                ],
+                                backgroundColor: ['#3B82F6', '#EC4899']
+                            }]
+                        },
+                        options: { plugins: { legend: { position: 'bottom' } } }
+                    });
+
+                    // Customer Type Chart
+                    new Chart(document.getElementById('customerTypeChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['สมาชิก', 'ใหม่'],
+                            datasets: [{
+                                data: [
+                                    data.filter(c => c.customer_type === 'สมาชิก').length,
+                                    data.filter(c => c.customer_type === 'ใหม่').length
+                                ],
+                                backgroundColor: ['#10B981', '#F59E0B']
+                            }]
+                        },
+                        options: { plugins: { legend: { position: 'bottom' } } }
+                    });
+
+                    // Total Records Chart
+                    new Chart(document.getElementById('totalRecordsChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['จำนวนข้อมูล'],
+                            datasets: [{
+                                data: [data.length],
+                                backgroundColor: ['#6366F1']
+                            }]
+                        },
+                        options: { plugins: { legend: { position: 'bottom' } } }
+                    });
+
+                    // Age Range Chart
+                    const ageRanges = {
+                        '0-20': data.filter(c => c.age <= 20).length,
+                        '21-40': data.filter(c => c.age > 20 && c.age <= 40).length,
+                        '41-60': data.filter(c => c.age > 40 && c.age <= 60).length,
+                        '61+': data.filter(c => c.age > 60).length
+                    };
+                    new Chart(document.getElementById('ageRangeChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(ageRanges),
+                            datasets: [{
+                                data: Object.values(ageRanges),
+                                backgroundColor: ['#EF4444', '#FBBF24', '#10B981', '#3B82F6']
+                            }]
+                        },
+                        options: { plugins: { legend: { position: 'bottom' } } }
+                    });
+                })
+                .catch(error => {
+                    console.error('Chart initialization error:', error);
+                    Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูลสำหรับกราฟ: ${error.message}`, 'error');
+                });
+        }
+    </script>
+</body>
+</html>
