@@ -442,14 +442,20 @@
     </div>
 
     <script>
-        const EDGE_FUNCTION_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
+        const EDGE_FUNCTION_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web'; // อัปเดตด้วย URL ที่ถูกต้อง
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('preloader').classList.remove('hidden');
-            await loadCustomers();
-            initializeCharts();
-            document.getElementById('preloader').classList.add('hidden');
+            try {
+                await loadCustomers();
+                await initializeCharts();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดแอป: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('preloader').classList.add('hidden');
+            }
         });
 
         // Modal and Form Handling
@@ -545,26 +551,32 @@
             };
 
             try {
+                console.log('Submitting form to:', EDGE_FUNCTION_URL, 'Method:', editingCustomerId ? 'PUT' : 'POST');
                 const response = await fetch(EDGE_FUNCTION_URL, {
                     method: editingCustomerId ? 'PUT' : 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: editingCustomerId, customer })
+                }).catch(err => {
+                    throw new Error(`Network error: ${err.message}`);
                 });
-                const text = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (parseError) {
-                    console.error('Response is not JSON:', text);
-                    throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Form submission response:', text);
+                    try {
+                        const result = JSON.parse(text);
+                        throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
+                    } catch (parseError) {
+                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                    }
                 }
-                if (!response.ok) throw new Error(result.error || `HTTP error ${response.status}`);
-                
-                Swal.fire('สำเร็จ', editingCustomerId ? 'แก้ไขข้อมูลลูกค้าสำเร็จ' : 'บันทึกข้อมูลลูกค้าสสำเร็จ', 'success');
+
+                const result = await response.json();
+                Swal.fire('สำเร็จ', editingCustomerId ? 'แก้ไขข้อมูลลูกค้าสำเร็จ' : 'บันทึกข้อมูลลูกค้าสำเร็จ', 'success');
                 modal.classList.add('hidden');
                 form.reset();
                 await loadCustomers();
-                initializeCharts();
+                await initializeCharts();
             } catch (error) {
                 console.error('Form submission error:', error);
                 Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการบันทึกข้อมูล: ${error.message}`, 'error');
@@ -579,18 +591,23 @@
             });
 
             try {
-                const response = await fetch(EDGE_FUNCTION_URL, { method: 'GET' });
-                const text = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (parseError) {
-                    console.error('Response is not JSON:', text);
-                    throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                console.log('Fetching customers from:', EDGE_FUNCTION_URL);
+                const response = await fetch(EDGE_FUNCTION_URL, { method: 'GET' }).catch(err => {
+                    throw new Error(`Network error: ${err.message}`);
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Load customers response:', text);
+                    try {
+                        const result = JSON.parse(text);
+                        throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
+                    } catch (parseError) {
+                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                    }
                 }
-                const { data, error } = result;
-                if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
-                
+
+                const { data } = await response.json();
                 const tableBody = document.getElementById('customerTable');
                 tableBody.innerHTML = '';
                 data.forEach(customer => {
@@ -612,18 +629,23 @@
                     btn.addEventListener('click', async () => {
                         const id = btn.getAttribute('data-id');
                         try {
-                            const response = await fetch(`${EDGE_FUNCTION_URL}?id=${id}`, { method: 'GET' });
-                            const text = await response.text();
-                            let result;
-                            try {
-                                result = JSON.parse(text);
-                            } catch (parseError) {
-                                console.error('Response is not JSON:', text);
-                                throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                            console.log('Fetching customer:', `${EDGE_FUNCTION_URL}?id=${id}`);
+                            const response = await fetch(`${EDGE_FUNCTION_URL}?id=${id}`, { method: 'GET' }).catch(err => {
+                                throw new Error(`Network error: ${err.message}`);
+                            });
+
+                            if (!response.ok) {
+                                const text = await response.text();
+                                console.error('Edit customer response:', text);
+                                try {
+                                    const result = JSON.parse(text);
+                                    throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
+                                } catch (parseError) {
+                                    throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                                }
                             }
-                            const { data, error } = result;
-                            if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
-                            
+
+                            const { data } = await response.json();
                             editingCustomerId = data.id;
                             modalTitle.textContent = 'แก้ไขข้อมูลลูกค้า';
                             for (const [key, value] of Object.entries(data)) {
@@ -650,25 +672,29 @@
                         }).then(async (result) => {
                             if (result.isConfirmed) {
                                 try {
+                                    console.log('Deleting customer:', id);
                                     const response = await fetch(EDGE_FUNCTION_URL, {
                                         method: 'DELETE',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ id })
+                                    }).catch(err => {
+                                        throw new Error(`Network error: ${err.message}`);
                                     });
-                                    const text = await response.text();
-                                    let result;
-                                    try {
-                                        result = JSON.parse(text);
-                                    } catch (parseError) {
-                                        console.error('Response is not JSON:', text);
-                                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+
+                                    if (!response.ok) {
+                                        const text = await response.text();
+                                        console.error('Delete customer response:', text);
+                                        try {
+                                            const result = JSON.parse(text);
+                                            throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
+                                        } catch (parseError) {
+                                            throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                                        }
                                     }
-                                    const { error } = result;
-                                    if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
-                                    
+
                                     Swal.fire('ลบสำเร็จ', 'ข้อมูลถูกลบเรียบร้อย', 'success');
                                     await loadCustomers();
-                                    initializeCharts();
+                                    await initializeCharts();
                                 } catch (error) {
                                     console.error('Delete customer error:', error);
                                     Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการลบข้อมูล: ${error.message}`, 'error');
@@ -682,93 +708,85 @@
             } catch (error) {
                 console.error('Load customers error:', error);
                 Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}`, 'error');
+                throw error; // Rethrow to catch in DOMContentLoaded
             }
         }
 
-        function initializeCharts() {
-            fetch(EDGE_FUNCTION_URL, { method: 'GET' })
-                .then(async response => {
+        async function initializeCharts() {
+            try {
+                console.log('Fetching charts from:', `${EDGE_FUNCTION_URL}/charts`);
+                const response = await fetch(`${EDGE_FUNCTION_URL}/charts`, { method: 'GET' }).catch(err => {
+                    throw new Error(`Network error: ${err.message}`);
+                });
+
+                if (!response.ok) {
                     const text = await response.text();
-                    let result;
+                    console.error('Charts response:', text);
                     try {
-                        result = JSON.parse(text);
+                        const result = JSON.parse(text);
+                        throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
                     } catch (parseError) {
-                        console.error('Response is not JSON:', text);
                         throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
                     }
-                    const { data, error } = result;
-                    if (!response.ok || error) throw new Error(error || `HTTP error ${response.status}`);
-                    return data;
-                })
-                .then(data => {
-                    // Gender Chart
-                    new Chart(document.getElementById('genderChart'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['ชาย', 'หญิง'],
-                            datasets: [{
-                                data: [
-                                    data.filter(c => c.gender === 'ชาย').length,
-                                    data.filter(c => c.gender === 'หญิง').length
-                                ],
-                                backgroundColor: ['#3B82F6', '#EC4899']
-                            }]
-                        },
-                        options: { plugins: { legend: { position: 'bottom' } } }
-                    });
+                }
 
-                    // Customer Type Chart
-                    new Chart(document.getElementById('customerTypeChart'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['สมาชิก', 'ใหม่'],
-                            datasets: [{
-                                data: [
-                                    data.filter(c => c.customer_type === 'สมาชิก').length,
-                                    data.filter(c => c.customer_type === 'ใหม่').length
-                                ],
-                                backgroundColor: ['#10B981', '#F59E0B']
-                            }]
-                        },
-                        options: { plugins: { legend: { position: 'bottom' } } }
-                    });
-
-                    // Total Records Chart
-                    new Chart(document.getElementById('totalRecordsChart'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['จำนวนข้อมูล'],
-                            datasets: [{
-                                data: [data.length],
-                                backgroundColor: ['#6366F1']
-                            }]
-                        },
-                        options: { plugins: { legend: { position: 'bottom' } } }
-                    });
-
-                    // Age Range Chart
-                    const ageRanges = {
-                        '0-20': data.filter(c => c.age <= 20).length,
-                        '21-40': data.filter(c => c.age > 20 && c.age <= 40).length,
-                        '41-60': data.filter(c => c.age > 40 && c.age <= 60).length,
-                        '61+': data.filter(c => c.age > 60).length
-                    };
-                    new Chart(document.getElementById('ageRangeChart'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: Object.keys(ageRanges),
-                            datasets: [{
-                                data: Object.values(ageRanges),
-                                backgroundColor: ['#EF4444', '#FBBF24', '#10B981', '#3B82F6']
-                            }]
-                        },
-                        options: { plugins: { legend: { position: 'bottom' } } }
-                    });
-                })
-                .catch(error => {
-                    console.error('Chart initialization error:', error);
-                    Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูลสำหรับกราฟ: ${error.message}`, 'error');
+                const { data } = await response.json();
+                // Gender Chart
+                new Chart(document.getElementById('genderChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.gender.map(g => g.gender),
+                        datasets: [{
+                            data: data.gender.map(g => g.count),
+                            backgroundColor: ['#3B82F6', '#EC4899']
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
                 });
+
+                // Customer Type Chart
+                new Chart(document.getElementById('customerTypeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.customer_type.map(ct => ct.customer_type),
+                        datasets: [{
+                            data: data.customer_type.map(ct => ct.count),
+                            backgroundColor: ['#10B981', '#F59E0B']
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+
+                // Total Records Chart
+                new Chart(document.getElementById('totalRecordsChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['จำนวนข้อมูล'],
+                        datasets: [{
+                            data: [data.total_records],
+                            backgroundColor: ['#6366F1']
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+
+                // Age Range Chart
+                new Chart(document.getElementById('ageRangeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.age_ranges.map(ar => ar.age_range),
+                        datasets: [{
+                            data: data.age_ranges.map(ar => ar.count),
+                            backgroundColor: ['#EF4444', '#FBBF24', '#10B981', '#3B82F6']
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            } catch (error) {
+                console.error('Chart initialization error:', error);
+                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูลสำหรับกราฟ: ${error.message}`, 'error');
+                throw error; // Rethrow to catch in DOMContentLoaded
+            }
         }
     </script>
 </body>
