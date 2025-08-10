@@ -94,7 +94,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium">วันเดือนปี</label>
-                                <input type="text" id="birth_date" class="flatpickr w-full p-2 border rounded">
+                                <input type="text" id="birth_date" name="birth_date" class="flatpickr w-full p-2 border rounded">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium">ชื่อ</label>
@@ -466,7 +466,7 @@
             });
         }
 
-        // Handle form submission
+        // Handle form submission for new records
         async function handleFormSubmit(e) {
             e.preventDefault();
             Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
@@ -500,17 +500,41 @@
 
         // Edit customer
         async function editCustomer(id) {
+            if (!id || isNaN(id)) {
+                Swal.fire('เกิดข้อผิดพลาด!', 'ID ไม่ถูกต้อง', 'error');
+                console.error('Invalid ID:', id);
+                return;
+            }
+            console.log('Editing customer with ID:', id);
             try {
                 const record = await makeRequest({ method: 'GET_BY_ID', id });
                 if (!record) {
                     throw new Error('No record found for the given ID');
                 }
+                console.log('Fetched record for editing:', record);
                 openModal();
                 const form = document.getElementById('customerForm');
                 Object.entries(record).forEach(([key, value]) => {
                     if (key === 'member_type') {
                         const input = form.querySelector(`input[name="member_type"][value="${value}"]`);
                         if (input) input.checked = true;
+                    } else if (key === 'birth_date') {
+                        const input = form.querySelector(`[name="${key}"]`);
+                        if (input && value) {
+                            input.value = value;
+                            flatpickr("#birth_date", {
+                                dateFormat: "Y-m-d",
+                                defaultDate: value,
+                                locale: {
+                                    firstDayOfWeek: 1,
+                                    weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
+                                    months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
+                                }
+                            });
+                        }
+                    } else if (key === 'outstanding') {
+                        const input = form.querySelector(`[name="${key}"]`);
+                        if (input) input.value = value !== null ? value : '';
                     } else if (Array.isArray(value)) {
                         value.forEach(val => {
                             const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
@@ -542,6 +566,7 @@
                     });
 
                     try {
+                        console.log('Updating record with ID:', id, 'Data:', updatedData);
                         const result = await makeRequest({ method: 'PUT', id, data: updatedData });
                         Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
                         closeModal();
