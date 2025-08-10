@@ -3,791 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการข้อมูลลูกค้าแว่นตา</title>
+    <title>ระบบจัดการข้อมูลแว่นตา</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        /* Custom styles for pastel-themed form with aligned columns */
-        .form-label {
-            color: #6B7280; /* Soft gray-blue for labels */
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            display: block;
+        #modal { display: none; }
+        #modal:not(.hidden) { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            z-index: 1000; 
         }
-        .form-input, .form-textarea {
-            background-color: #FDFDFD; /* Off-white background */
-            border: 2px solid #A3BFFA; /* Pastel blue border */
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            font-size: 1rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            width: 100%; /* Ensure inputs fill their grid cell */
-            box-sizing: border-box;
+        #modal .modal-content { 
+            max-height: 80vh; 
+            overflow-y: auto; 
+            width: 100%; 
+            max-width: 1000px; /* Increased for better form layout */
+            margin: 1rem; /* Ensure margin on small screens */
         }
-        .form-input:focus, .form-textarea:focus {
-            border-color: #7F9CF5; /* Slightly darker pastel blue on focus */
-            box-shadow: 0 0 0 3px rgba(127, 156, 245, 0.3);
-            outline: none;
-        }
-        .form-section {
-            background-color: #F3F4F6; /* Light pastel gray background */
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        .form-section h3 {
-            color: #4B5563; /* Darker gray for section titles */
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        .form-input::placeholder, .form-textarea::placeholder {
-            color: #9CA3AF; /* Light gray for placeholders */
-        }
-        /* Alternate border colors for visual distinction */
-        .form-input:nth-child(odd) {
-            border-color: #FBB6CE; /* Pastel pink for odd inputs */
-        }
-        .form-input:nth-child(odd):focus {
-            border-color: #F687B3; /* Slightly darker pastel pink on focus */
-            box-shadow: 0 0 0 3px rgba(246, 135, 179, 0.3);
-        }
-        .form-input:nth-child(even) {
-            border-color: #B5EAD7; /* Pastel green for even inputs */
-        }
-        .form-input:nth-child(even):focus {
-            border-color: #68D391; /* Slightly darker pastel green on focus */
-            box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.3);
-        }
-        .modal-content {
-            background-color: #FFFFFF;
-            border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        /* Grid for consistent column alignment */
-        .form-grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
-        }
-        .form-grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 1rem;
-        }
-        .form-grid-1 {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-        .form-field {
+        #preloader { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            background: white; 
+            z-index: 9999; 
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .checkbox-group { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 1rem; 
+        }
+        .checkbox-group label { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
         }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- Preloader -->
-    <div id="preloader" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    <div id="preloader">
+        <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
     </div>
 
-    <!-- Main Content -->
     <div class="container mx-auto p-6">
-        <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">ระบบจัดการข้อมูลลูกค้าแว่นตา</h1>
+        <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ระบบจัดการข้อมูลแว่นตา</h1>
+        
+        <button id="openModalBtn" class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            เพิ่มข้อมูลลูกค้า
+        </button>
 
-        <!-- Add Customer Button -->
-        <button id="addCustomerBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg mb-6 hover:bg-blue-600">เพิ่มข้อมูลลูกค้า</button>
+        <!-- Modal -->
+        <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+            <div class="modal-content bg-white p-6 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4">บันทึกข้อมูลลูกค้า</h2>
+                <form id="customerForm">
+                    <!-- Customer Information -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold mb-2">ข้อมูลสมาชิก</h3>
+                        <div class="checkbox-group">
+                            <label><input type="radio" name="member_type" value="member"> ลูกค้าสมาชิก</label>
+                            <label><input type="radio" name="member_type" value="new"> ลูกค้าใหม่</label>
+                        </div>
+                    </div>
 
-        <!-- Customer Table -->
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-สกุล</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทลูกค้า</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เพศ</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุ</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การดำเนินการ</th>
-                    </tr>
-                </thead>
-                <tbody id="customerTable" class="bg-white divide-y divide-gray-200"></tbody>
-            </table>
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold mb-2">ข้อมูลลูกค้า</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium">วันเดือนปี</label>
+                                <input type="text" id="birth_date" class="flatpickr w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">ชื่อ</label>
+                                <input type="text" name="first_name" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">สกุล</label>
+                                <input type="text" name="last_name" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">อายุ</label>
+                                <input type="number" name="age" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">เพศ</label>
+                                <select name="gender" class="w-full p-2 border rounded" required>
+                                    <option value="male">ชาย</option>
+                                    <option value="female">หญิง</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">หมายเลขโทรศัพท์</label>
+                                <input type="tel" name="phone" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium">ที่อยู่</label>
+                                <textarea name="address" class="w-full p-2 border rounded" rows="4" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- O.D[R] and O.D[L] -->
+                    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">O.D[R]</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-sm">Sphere</label><input type="text" name="od_r_sphere" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">CYL</label><input type="text" name="od_r_cyl" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">AXIS</label><input type="text" name="od_r_axis" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">ADD</label><input type="text" name="od_r_add" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">DPD</label><input type="text" name="od_r_dpd" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">NPD</label><input type="text" name="od_r_npd" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">SegHT</label><input type="text" name="od_r_seght" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">Prism</label><input type="text" name="od_r_prism" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">MONO-VA</label><input type="text" name="od_r_mono_va" class="w-full p-2 border rounded"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">O.D[L]</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-sm">Sphere</label><input type="text" name="od_l_sphere" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">CYL</label><input type="text" name="od_l_cyl" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">AXIS</label><input type="text" name="od_l_axis" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">ADD</label><input type="text" name="od_l_add" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">DPD</label><input type="text" name="od_l_dpd" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">NPD</label><input type="text" name="od_l_npd" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">SegHT</label><input type="text" name="od_l_seght" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">Prism</label><input type="text" name="od_l_prism" class="w-full p-2 border rounded"></div>
+                                <div><label class="block text-sm">MONO-VA</label><input type="text" name="od_l_mono_va" class="w-full p-2 border rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lens Information -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold mb-2">ข้อมูลเลนส์</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm">VA Both eyes (OU)</label><input type="text" name="va_both_eyes" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">เลนส์เดิม R</label><input type="text" name="lens_old_r" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">เลนส์เดิม L</label><input type="text" name="lens_old_l" class="w-full p-2 border rounded"></div>
+                        </div>
+                    </div>
+
+                    <!-- Primary Rx -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold mb-2">Primary Rx</h3>
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium">Material Index</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="material_index" value="CR39"> CR39</label>
+                                <label><input type="checkbox" name="material_index" value="1.56"> 1.56</label>
+                                <label><input type="checkbox" name="material_index" value="1.6"> 1.6</label>
+                                <label><input type="checkbox" name="material_index" value="1.67"> 1.67</label>
+                                <label><input type="checkbox" name="material_index" value="1.74"> 1.74</label>
+                                <label><input type="checkbox" name="material_index" value="PC"> PC</label>
+                                <label><input type="checkbox" name="material_index" value="HIVEX"> HIVEX</label>
+                                <label><input type="checkbox" name="material_index" value="Other"> Other</label>
+                                <input type="text" name="material_index_other" class="w-full p-2 border rounded" placeholder="ระบุอื่นๆ">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium">Option</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="lens_option" value="Clear Lens"> Clear Lens</label>
+                                <label><input type="checkbox" name="lens_option" value="UV420"> UV420</label>
+                                <label><input type="checkbox" name="lens_option" value="Photochromic"> Photochromic</label>
+                                <label><input type="checkbox" name="lens_option" value="Transition"> Transition</label>
+                                <label><input type="checkbox" name="lens_option" value="Other"> Other</label>
+                                <input type="text" name="lens_option_other" class="w-full p-2 border rounded" placeholder="ระบุอื่นๆ">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium">Lens Design</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="lens_design" value="Single Vision"> Single Vision</label>
+                                <label><input type="checkbox" name="lens_design" value="Bifocal"> Bifocal</label>
+                                <label><input type="checkbox" name="lens_design" value="Trifocal"> Trifocal</label>
+                                <label><input type="checkbox" name="lens_design" value="Progressive"> Progressive</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">Lens Type</label>
+                            <textarea name="lens_type" class="w-full p-2 border rounded" rows="3"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium">ทำสี (Tint)</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="tint" value="Original"> เดิม</label>
+                                <label><input type="checkbox" name="tint" value="Gradient"> ไล่สี</label>
+                                <input type="text" name="tint_color" class="w-full p-2 border rounded" placeholder="ระบุสี">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium">Treatment (เคลือบ)</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="treatment" value="UC"> UC</label>
+                                <label><input type="checkbox" name="treatment" value="HC"> HC</label>
+                                <label><input type="checkbox" name="treatment" value="HMC"> HMC</label>
+                                <label><input type="checkbox" name="treatment" value="SuperHMC"> SuperHMC</label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="text-lg font-medium">Wear Type</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="wear_type" value="Full Time"> ตลอดเวลา</label>
+                                <label><input type="checkbox" name="wear_type" value="Distance"> มองไกล</label>
+                                <label><input type="checkbox" name="wear_type" value="Near"> มองใกล้</label>
+                                <label><input type="checkbox" name="wear_type" value="Computer"> ระยะคอมพิวเตอร์</label>
+                                <label><input type="checkbox" name="wear_type" value="Sunglasses"> กันแดด</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Frame Details -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold mb-2">โครงสร้างแว่น</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm">BVD</label><input type="text" name="bvd" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">PTA</label><input type="text" name="pta" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">Wrap</label><input type="text" name="wrap" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">BCL</label><input type="text" name="bcl" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">คาน</label><input type="text" name="frame_bridge" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">สูง</label><input type="text" name="frame_height" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">กว้าง</label><input type="text" name="frame_width" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ทะแยง</label><input type="text" name="frame_diagonal" class="w-full p-2 border rounded"></div>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-lg font-medium">ลักษณะเข้ากรอบ</h4>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="frame_type" value="Full"> เต็ม</label>
+                                <label><input type="checkbox" name="frame_type" value="Groove"> เซาะ</label>
+                                <label><input type="checkbox" name="frame_type" value="Drill"> เจาะ</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Details -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold mb-2">รายการแว่น</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm">ยี่ห้อแว่น</label><input type="text" name="frame_brand" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">รุ่น</label><input type="text" name="frame_model" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">หมายเหตุ</label><input type="text" name="notes" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ราคาแว่น</label><input type="number" name="frame_price" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ราคาเลนส์</label><input type="number" name="lens_price" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ส่วนลด</label><input type="number" name="discount" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ยอดรวม</label><input type="number" name="total" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ชำระ</label><input type="number" name="paid" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ผู้ตรวจสายตา</label><input type="text" name="examiner" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">ผู้สั่งซื้อ</label><input type="text" name="buyer" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm">คงค้าง</label><input type="number" name="outstanding" class="w-full p-2 border rounded"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-4">
+                        <button type="button" id="closeModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">ยกเลิก</button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">บันทึก</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Charts -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-semibold text-gray-700 mb-4">เพศ</h2>
-                <canvas id="genderChart"></canvas>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-semibold text-gray-700 mb-4">ประเภทลูกค้า</h2>
-                <canvas id="customerTypeChart"></canvas>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-semibold text-gray-700 mb-4">จำนวนข้อมูล</h2>
-                <canvas id="totalRecordsChart"></canvas>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-semibold text-gray-700 mb-4">ช่วงอายุ</h2>
-                <canvas id="ageRangeChart"></canvas>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div><canvas id="genderChart"></canvas></div>
+            <div><canvas id="memberTypeChart"></canvas></div>
+            <div><canvas id="totalRecordsChart"></canvas></div>
+            <div><canvas id="ageRangeChart"></canvas></div>
         </div>
-    </div>
 
-    <!-- Modal -->
-    <div id="customerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="modal-content p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
-            <h2 id="modalTitle" class="text-2xl font-bold text-blue-600 mb-4">เพิ่มข้อมูลลูกค้า</h2>
-            <form id="customerForm">
-                <!-- Member Information -->
-                <div class="form-section">
-                    <h3>ข้อมูลสมาชิก</h3>
-                    <div class="form-grid-1">
-                        <div class="form-field">
-                            <label class="form-label">ประเภทลูกค้า</label>
-                            <input type="text" name="customer_type" class="form-input" placeholder="เช่น สมาชิก, ใหม่">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Information -->
-                <div class="form-section">
-                    <h3>ข้อมูลลูกค้า</h3>
-                    <div class="form-grid-2">
-                        <div class="form-field">
-                            <label class="form-label">วันเดือนปีเกิด</label>
-                            <input type="date" name="birth_date" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ชื่อ</label>
-                            <input type="text" name="first_name" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">สกุล</label>
-                            <input type="text" name="last_name" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">อายุ</label>
-                            <input type="number" name="age" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">เพศ</label>
-                            <input type="text" name="gender" class="form-input" placeholder="เช่น ชาย, หญิง">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">หมายเลขโทรศัพท์</label>
-                            <input type="text" name="phone" class="form-input">
-                        </div>
-                        <div class="form-field col-span-2">
-                            <label class="form-label">ที่อยู่</label>
-                            <textarea name="address" class="form-textarea"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- O.D[R] -->
-                <div class="form-section">
-                    <h3>O.D[R]</h3>
-                    <div class="form-grid-3">
-                        <div class="form-field">
-                            <label class="form-label">Sphere</label>
-                            <input type="text" name="od_r_sphere" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">CYL</label>
-                            <input type="text" name="od_r_cyl" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">AXIS</label>
-                            <input type="text" name="od_r_axis" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ADD</label>
-                            <input type="text" name="od_r_add" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">DPD</label>
-                            <input type="text" name="od_r_dpd" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">NPD</label>
-                            <input type="text" name="od_r_npd" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">SegHT</label>
-                            <input type="text" name="od_r_seght" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Prism</label>
-                            <input type="text" name="od_r_prism" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">MONO-VA</label>
-                            <input type="text" name="od_r_mono_va" class="form-input">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- O.D[L] -->
-                <div class="form-section">
-                    <h3>O.D[L]</h3>
-                    <div class="form-grid-3">
-                        <div class="form-field">
-                            <label class="form-label">Sphere</label>
-                            <input type="text" name="od_l_sphere" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">CYL</label>
-                            <input type="text" name="od_l_cyl" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">AXIS</label>
-                            <input type="text" name="od_l_axis" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ADD</label>
-                            <input type="text" name="od_l_add" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">DPD</label>
-                            <input type="text" name="od_l_dpd" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">NPD</label>
-                            <input type="text" name="od_l_npd" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">SegHT</label>
-                            <input type="text" name="od_l_seght" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Prism</label>
-                            <input type="text" name="od_l_prism" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">MONO-VA</label>
-                            <input type="text" name="od_l_mono_va" class="form-input">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Lens Information -->
-                <div class="form-section">
-                    <h3>ข้อมูลเลนส์</h3>
-                    <div class="form-grid-2">
-                        <div class="form-field">
-                            <label class="form-label">VA Both eyes (OU)</label>
-                            <input type="text" name="va_ou" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">เลนส์เดิม R</label>
-                            <input type="text" name="lens_old_r" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">เลนส์เดิม L</label>
-                            <input type="text" name="lens_old_l" class="form-input">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Primary Rx -->
-                <div class="form-section">
-                    <h3>Primary Rx</h3>
-                    <div class="form-grid-2">
-                        <div class="form-field">
-                            <label class="form-label">Material Index</label>
-                            <input type="text" name="material_index" class="form-input" placeholder="เช่น CR39, 1.56, 1.6, 1.67, 1.74, PC, HIVEX, Other">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Option</label>
-                            <input type="text" name="lens_option" class="form-input" placeholder="เช่น Clear Lens, UV420, Photochromic, Transition, Other">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Lens Design</label>
-                            <input type="text" name="lens_design" class="form-input" placeholder="เช่น Single Vision, Bifocal, Trifocal, Progressive">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Lens Type</label>
-                            <textarea name="lens_type" class="form-textarea"></textarea>
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ทำสี (Tint)</label>
-                            <input type="text" name="tint" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">เดิม</label>
-                            <input type="text" name="original" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ไล่สี</label>
-                            <input type="text" name="gradient" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Treatment (เคลือบ)</label>
-                            <input type="text" name="treatment" class="form-input" placeholder="เช่น UC, HC, HMC, SuperHMC">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Wear Type</label>
-                            <input type="text" name="wear_type" class="form-input" placeholder="เช่น ตลอดเวลา, มองไกล, มองใกล้, ระยะคอมพิวเตอร์, กันแดด">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Frame Structure -->
-                <div class="form-section">
-                    <h3>โครงสร้างแว่น</h3>
-                    <div class="form-grid-3">
-                        <div class="form-field">
-                            <label class="form-label">BVD</label>
-                            <input type="text" name="bvd" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">PTA</label>
-                            <input type="text" name="pta" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Wrap</label>
-                            <input type="text" name="wrap" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">BCL</label>
-                            <input type="text" name="bcl" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">คาน</label>
-                            <input type="text" name="bridge" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">สูง</label>
-                            <input type="text" name="height" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">กว้าง</label>
-                            <input type="text" name="width" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ทะแยง</label>
-                            <input type="text" name="diagonal" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ลักษณะเข้ากรอบ</label>
-                            <input type="text" name="frame_type" class="form-input" placeholder="เช่น เต็ม, เซาะ, เจาะ">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Eyeglass Order -->
-                <div class="form-section">
-                    <h3>รายการแว่น</h3>
-                    <div class="form-grid-2">
-                        <div class="form-field">
-                            <label class="form-label">ยี่ห้อแว่น</label>
-                            <input type="text" name="brand" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">รุ่น</label>
-                            <input type="text" name="model" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">หมายเหตุ</label>
-                            <input type="text" name="notes" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ราคาแว่น</label>
-                            <input type="number" name="frame_price" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ราคาเลนส์</label>
-                            <input type="number" name="lens_price" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ส่วนลด</label>
-                            <input type="number" name="discount" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ยอดรวม</label>
-                            <input type="number" name="total" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ชำระ</label>
-                            <input type="number" name="paid" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ผู้ตรวจสายตา</label>
-                            <input type="text" name="examiner" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">ผู้สั่งซื้อ</label>
-                            <input type="text" name="buyer" class="form-input">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">คงค้าง</label>
-                            <input type="number" name="outstanding" class="form-input">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Buttons -->
-                <div class="flex justify-end gap-4">
-                    <button type="button" id="cancelBtn" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">ยกเลิก</button>
-                    <button type="submit" id="submitBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">บันทึก</button>
-                </div>
-            </form>
+        <!-- Data Table -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2">ชื่อ</th>
+                        <th class="px-4 py-2">สกุล</th>
+                        <th class="px-4 py-2">เพศ</th>
+                        <th class="px-4 py-2">ประเภทสมาชิก</th>
+                        <th class="px-4 py-2">การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTable"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        const EDGE_FUNCTION_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web'; // อัปเดตด้วย URL ที่ถูกต้อง
+        // Replace 'customer_crud' with the actual function name
+        const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
+        let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('preloader').classList.remove('hidden');
-            try {
-                await loadCustomers();
-                await initializeCharts();
-            } catch (error) {
-                console.error('Initialization error:', error);
-                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดแอป: ${error.message}`, 'error');
-            } finally {
-                document.getElementById('preloader').classList.add('hidden');
+        // Initialize Flatpickr
+        flatpickr("#birth_date", {
+            dateFormat: "Y-m-d",
+            locale: {
+                firstDayOfWeek: 1,
+                weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
+                months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
             }
         });
 
-        // Modal and Form Handling
-        const modal = document.getElementById('customerModal');
-        const form = document.getElementById('customerForm');
-        const modalTitle = document.getElementById('modalTitle');
-        const addCustomerBtn = document.getElementById('addCustomerBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        let editingCustomerId = null;
-
-        addCustomerBtn.addEventListener('click', () => {
-            modalTitle.textContent = 'เพิ่มข้อมูลลูกค้า';
-            form.reset();
-            editingCustomerId = null;
+        // Modal control functions
+        function openModal() {
+            const modal = document.getElementById('modal');
             modal.classList.remove('hidden');
-        });
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerForm').onsubmit = handleFormSubmit;
+        }
 
-        cancelBtn.addEventListener('click', () => {
+        function closeModal() {
+            const modal = document.getElementById('modal');
             modal.classList.add('hidden');
-            form.reset();
-        });
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerForm').onsubmit = handleFormSubmit;
+        }
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            Swal.fire({
-                title: 'กำลังบันทึก...',
-                didOpen: () => Swal.showLoading(),
-                allowOutsideClick: false
-            });
-
-            const formData = new FormData(form);
-            const customer = {
-                customer_type: formData.get('customer_type'),
-                birth_date: formData.get('birth_date'),
-                first_name: formData.get('first_name'),
-                last_name: formData.get('last_name'),
-                age: parseInt(formData.get('age')) || 0,
-                gender: formData.get('gender'),
-                phone: formData.get('phone'),
-                address: formData.get('address'),
-                od_r_sphere: formData.get('od_r_sphere'),
-                od_r_cyl: formData.get('od_r_cyl'),
-                od_r_axis: formData.get('od_r_axis'),
-                od_r_add: formData.get('od_r_add'),
-                od_r_dpd: formData.get('od_r_dpd'),
-                od_r_npd: formData.get('od_r_npd'),
-                od_r_seght: formData.get('od_r_seght'),
-                od_r_prism: formData.get('od_r_prism'),
-                od_r_mono_va: formData.get('od_r_mono_va'),
-                od_l_sphere: formData.get('od_l_sphere'),
-                od_l_cyl: formData.get('od_l_cyl'),
-                od_l_axis: formData.get('od_l_axis'),
-                od_l_add: formData.get('od_l_add'),
-                od_l_dpd: formData.get('od_l_dpd'),
-                od_l_npd: formData.get('od_l_npd'),
-                od_l_seght: formData.get('od_l_seght'),
-                od_l_prism: formData.get('od_l_prism'),
-                od_l_mono_va: formData.get('od_l_mono_va'),
-                va_ou: formData.get('va_ou'),
-                lens_old_r: formData.get('lens_old_r'),
-                lens_old_l: formData.get('lens_old_l'),
-                material_index: formData.get('material_index'),
-                lens_option: formData.get('lens_option'),
-                lens_design: formData.get('lens_design'),
-                lens_type: formData.get('lens_type'),
-                tint: formData.get('tint'),
-                original: formData.get('original'),
-                gradient: formData.get('gradient'),
-                treatment: formData.get('treatment'),
-                wear_type: formData.get('wear_type'),
-                bvd: formData.get('bvd'),
-                pta: formData.get('pta'),
-                wrap: formData.get('wrap'),
-                bcl: formData.get('bcl'),
-                bridge: formData.get('bridge'),
-                height: formData.get('height'),
-                width: formData.get('width'),
-                diagonal: formData.get('diagonal'),
-                frame_type: formData.get('frame_type'),
-                brand: formData.get('brand'),
-                model: formData.get('model'),
-                notes: formData.get('notes'),
-                frame_price: parseFloat(formData.get('frame_price')) || 0,
-                lens_price: parseFloat(formData.get('lens_price')) || 0,
-                discount: parseFloat(formData.get('discount')) || 0,
-                total: parseFloat(formData.get('total')) || 0,
-                paid: parseFloat(formData.get('paid')) || 0,
-                examiner: formData.get('examiner'),
-                buyer: formData.get('buyer'),
-                outstanding: parseFloat(formData.get('outstanding')) || 0,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-
+        // Enhanced fetch with detailed error handling
+        async function makeRequest(payload) {
             try {
-                console.log('Submitting form to:', EDGE_FUNCTION_URL, 'Method:', editingCustomerId ? 'PUT' : 'POST');
-                const response = await fetch(EDGE_FUNCTION_URL, {
-                    method: editingCustomerId ? 'PUT' : 'POST',
+                const response = await fetch(SUPABASE_FUNCTIONS_URL, {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: editingCustomerId, customer })
-                }).catch(err => {
-                    throw new Error(`Network error: ${err.message}`);
+                    body: JSON.stringify(payload)
                 });
-
                 if (!response.ok) {
                     const text = await response.text();
-                    console.error('Form submission response:', text);
-                    try {
-                        const result = JSON.parse(text);
-                        throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
-                    } catch (parseError) {
-                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
-                    }
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}. Response: ${text.substring(0, 100)}...`);
                 }
-
-                const result = await response.json();
-                Swal.fire('สำเร็จ', editingCustomerId ? 'แก้ไขข้อมูลลูกค้าสำเร็จ' : 'บันทึกข้อมูลลูกค้าสำเร็จ', 'success');
-                modal.classList.add('hidden');
-                form.reset();
-                await loadCustomers();
-                await initializeCharts();
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Expected JSON, received ${contentType}: ${text.substring(0, 100)}...`);
+                }
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                return data;
             } catch (error) {
-                console.error('Form submission error:', error);
-                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการบันทึกข้อมูล: ${error.message}`, 'error');
+                console.error('Fetch error:', error);
+                throw error;
             }
-        });
+        }
 
-        async function loadCustomers() {
-            Swal.fire({
-                title: 'กำลังโหลด...',
-                didOpen: () => Swal.showLoading(),
-                allowOutsideClick: false
+        // Load customer data
+        async function loadData() {
+            Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
+            try {
+                const data = await makeRequest({ method: 'GET' });
+                Swal.close();
+                displayData(data);
+                updateCharts(data);
+            } catch (error) {
+                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูล: ${error.message}`, 'error');
+                console.error('Load data error:', error);
+            }
+        }
+
+        // Display data in table
+        function displayData(data) {
+            const tableBody = document.getElementById('customerTable');
+            tableBody.innerHTML = '';
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
+                tr.innerHTML = `
+                    <td class="border px-4 py-2">${item.first_name}</td>
+                    <td class="border px-4 py-2">${item.last_name}</td>
+                    <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
+                    <td class="border px-4 py-2">${Array.isArray(item.member_type) ? item.member_type.join(', ') : item.member_type || ''}</td>
+                    <td class="border px-4 py-2">
+                        <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
+                        <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
+                    </td>
+                `;
+                tr.querySelector('.edit-btn').addEventListener('click', () => editCustomer(item.id));
+                tr.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCustomer(item.id);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Update charts
+        function updateCharts(data) {
+            const genderCounts = { male: 0, female: 0 };
+            const memberCounts = { member: 0, new: 0 };
+            const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
+
+            data.forEach(item => {
+                genderCounts[item.gender]++;
+                if (Array.isArray(item.member_type)) {
+                    if (item.member_type.includes('member')) memberCounts.member++;
+                    if (item.member_type.includes('new')) memberCounts.new++;
+                }
+                if (item.age <= 20) ageRanges['0-20']++;
+                else if (item.age <= 40) ageRanges['21-40']++;
+                else if (item.age <= 60) ageRanges['41-60']++;
+                else ageRanges['61+']++;
+            });
+
+            if (genderChart) genderChart.destroy();
+            if (memberTypeChart) memberTypeChart.destroy();
+            if (totalRecordsChart) totalRecordsChart.destroy();
+            if (ageRangeChart) ageRangeChart.destroy();
+
+            genderChart = new Chart(document.getElementById('genderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ชาย', 'หญิง'],
+                    datasets: [{ data: [genderCounts.male, genderCounts.female], backgroundColor: ['#3B82F6', '#EC4899'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'สัดส่วนเพศ' } } }
+            });
+
+            memberTypeChart = new Chart(document.getElementById('memberTypeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ลูกค้าสมาชิก', 'ลูกค้าใหม่'],
+                    datasets: [{ data: [memberCounts.member, memberCounts.new], backgroundColor: ['#10B981', '#F59E0B'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'ประเภทสมาชิก' } } }
+            });
+
+            totalRecordsChart = new Chart(document.getElementById('totalRecordsChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['จำนวนทั้งหมด'],
+                    datasets: [{ data: [data.length], backgroundColor: ['#6366F1'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'จำนวนทั้งหมด' } } }
+            });
+
+            ageRangeChart = new Chart(document.getElementById('ageRangeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['0-20', '21-40', '41-60', '61+'],
+                    datasets: [{ data: Object.values(ageRanges), backgroundColor: ['#EF4444', '#F59E0B', '#10B981', '#3B82F6'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'ช่วงอายุ' } } }
+            });
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.member_type = formData.getAll('member_type');
+            data.frame_type = formData.getAll('frame_type');
+            data.material_index = formData.getAll('material_index');
+            data.lens_option = formData.getAll('lens_option');
+            data.lens_design = formData.getAll('lens_design');
+            data.tint = formData.getAll('tint');
+            data.treatment = formData.getAll('treatment');
+            data.wear_type = formData.getAll('wear_type');
+
+            // Convert numeric fields
+            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                if (data[key]) data[key] = parseFloat(data[key]);
+                else data[key] = null;
             });
 
             try {
-                console.log('Fetching customers from:', EDGE_FUNCTION_URL);
-                const response = await fetch(EDGE_FUNCTION_URL, { method: 'GET' }).catch(err => {
-                    throw new Error(`Network error: ${err.message}`);
-                });
-
-                if (!response.ok) {
-                    const text = await response.text();
-                    console.error('Load customers response:', text);
-                    try {
-                        const result = JSON.parse(text);
-                        throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
-                    } catch (parseError) {
-                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
-                    }
-                }
-
-                const { data } = await response.json();
-                const tableBody = document.getElementById('customerTable');
-                tableBody.innerHTML = '';
-                data.forEach(customer => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">${customer.first_name} ${customer.last_name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${customer.customer_type}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${customer.gender}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${customer.age}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button class="editBtn text-blue-600 hover:underline" data-id="${customer.id}">แก้ไข</button>
-                            <button class="deleteBtn text-red-600 hover:underline" data-id="${customer.id}">ลบ</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-
-                document.querySelectorAll('.editBtn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const id = btn.getAttribute('data-id');
-                        try {
-                            console.log('Fetching customer:', `${EDGE_FUNCTION_URL}?id=${id}`);
-                            const response = await fetch(`${EDGE_FUNCTION_URL}?id=${id}`, { method: 'GET' }).catch(err => {
-                                throw new Error(`Network error: ${err.message}`);
-                            });
-
-                            if (!response.ok) {
-                                const text = await response.text();
-                                console.error('Edit customer response:', text);
-                                try {
-                                    const result = JSON.parse(text);
-                                    throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
-                                } catch (parseError) {
-                                    throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
-                                }
-                            }
-
-                            const { data } = await response.json();
-                            editingCustomerId = data.id;
-                            modalTitle.textContent = 'แก้ไขข้อมูลลูกค้า';
-                            for (const [key, value] of Object.entries(data)) {
-                                const input = form.querySelector(`[name="${key}"]`);
-                                if (input) input.value = value || '';
-                            }
-                            modal.classList.remove('hidden');
-                        } catch (error) {
-                            console.error('Edit customer error:', error);
-                            Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}`, 'error');
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.deleteBtn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const id = btn.getAttribute('data-id');
-                        Swal.fire({
-                            title: 'ยืนยันการลบ?',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonText: 'ลบ',
-                            cancelButtonText: 'ยกเลิก'
-                        }).then(async (result) => {
-                            if (result.isConfirmed) {
-                                try {
-                                    console.log('Deleting customer:', id);
-                                    const response = await fetch(EDGE_FUNCTION_URL, {
-                                        method: 'DELETE',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ id })
-                                    }).catch(err => {
-                                        throw new Error(`Network error: ${err.message}`);
-                                    });
-
-                                    if (!response.ok) {
-                                        const text = await response.text();
-                                        console.error('Delete customer response:', text);
-                                        try {
-                                            const result = JSON.parse(text);
-                                            throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
-                                        } catch (parseError) {
-                                            throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
-                                        }
-                                    }
-
-                                    Swal.fire('ลบสำเร็จ', 'ข้อมูลถูกลบเรียบร้อย', 'success');
-                                    await loadCustomers();
-                                    await initializeCharts();
-                                } catch (error) {
-                                    console.error('Delete customer error:', error);
-                                    Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการลบข้อมูล: ${error.message}`, 'error');
-                                }
-                            }
-                        });
-                    });
-                });
-
-                Swal.close();
+                const result = await makeRequest({ method: 'POST', data });
+                Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
+                closeModal();
+                loadData();
             } catch (error) {
-                console.error('Load customers error:', error);
-                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}`, 'error');
-                throw error; // Rethrow to catch in DOMContentLoaded
+                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
+                console.error('Form submission error:', error);
             }
         }
 
-        async function initializeCharts() {
+        // Edit customer
+        async function editCustomer(id) {
             try {
-                console.log('Fetching charts from:', `${EDGE_FUNCTION_URL}/charts`);
-                const response = await fetch(`${EDGE_FUNCTION_URL}/charts`, { method: 'GET' }).catch(err => {
-                    throw new Error(`Network error: ${err.message}`);
-                });
-
-                if (!response.ok) {
-                    const text = await response.text();
-                    console.error('Charts response:', text);
-                    try {
-                        const result = JSON.parse(text);
-                        throw new Error(result.error || `HTTP error ${response.status}: ${text}`);
-                    } catch (parseError) {
-                        throw new Error(`Invalid response format: ${text.substring(0, 100)}...`);
+                const record = await makeRequest({ method: 'GET_BY_ID', id });
+                openModal();
+                const form = document.getElementById('customerForm');
+                Object.entries(record).forEach(([key, value]) => {
+                    if (Array.isArray(value)) {
+                        value.forEach(val => {
+                            const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
+                            if (input) input.checked = true;
+                        });
+                    } else {
+                        const input = form.querySelector(`[name="${key}"]`);
+                        if (input) input.value = value || '';
                     }
-                }
-
-                const { data } = await response.json();
-                // Gender Chart
-                new Chart(document.getElementById('genderChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.gender.map(g => g.gender),
-                        datasets: [{
-                            data: data.gender.map(g => g.count),
-                            backgroundColor: ['#3B82F6', '#EC4899']
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom' } } }
                 });
 
-                // Customer Type Chart
-                new Chart(document.getElementById('customerTypeChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.customer_type.map(ct => ct.customer_type),
-                        datasets: [{
-                            data: data.customer_type.map(ct => ct.count),
-                            backgroundColor: ['#10B981', '#F59E0B']
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom' } } }
-                });
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+                    const formData = new FormData(e.target);
+                    const updatedData = Object.fromEntries(formData);
+                    updatedData.member_type = formData.getAll('member_type');
+                    updatedData.frame_type = formData.getAll('frame_type');
+                    updatedData.material_index = formData.getAll('material_index');
+                    updatedData.lens_option = formData.getAll('lens_option');
+                    updatedData.lens_design = formData.getAll('lens_design');
+                    updatedData.tint = formData.getAll('tint');
+                    updatedData.treatment = formData.getAll('treatment');
+                    updatedData.wear_type = formData.getAll('wear_type');
 
-                // Total Records Chart
-                new Chart(document.getElementById('totalRecordsChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['จำนวนข้อมูล'],
-                        datasets: [{
-                            data: [data.total_records],
-                            backgroundColor: ['#6366F1']
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom' } } }
-                });
+                    // Convert numeric fields
+                    ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                        if (updatedData[key]) updatedData[key] = parseFloat(updatedData[key]);
+                        else updatedData[key] = null;
+                    });
 
-                // Age Range Chart
-                new Chart(document.getElementById('ageRangeChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.age_ranges.map(ar => ar.age_range),
-                        datasets: [{
-                            data: data.age_ranges.map(ar => ar.count),
-                            backgroundColor: ['#EF4444', '#FBBF24', '#10B981', '#3B82F6']
-                        }]
-                    },
-                    options: { plugins: { legend: { position: 'bottom' } } }
-                });
+                    try {
+                        const result = await makeRequest({ method: 'PUT', id, data: updatedData });
+                        Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
+                        closeModal();
+                        loadData();
+                    } catch (error) {
+                        Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
+                        console.error('Edit customer error:', error);
+                    }
+                };
             } catch (error) {
-                console.error('Chart initialization error:', error);
-                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการโหลดข้อมูลสำหรับกราฟ: ${error.message}`, 'error');
-                throw error; // Rethrow to catch in DOMContentLoaded
+                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลลูกค้า: ${error.message}`, 'error');
+                console.error('Edit customer error:', error);
             }
         }
+
+        // Delete customer
+        async function deleteCustomer(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: 'ข้อมูลนี้จะถูกลบอย่างถาวร',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'ลบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const result = await makeRequest({ method: 'DELETE', id });
+                        Swal.fire('สำเร็จ!', 'ลบข้อมูลเรียบร้อย', 'success');
+                        loadData();
+                    } catch (error) {
+                        Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถลบข้อมูล: ${error.message}`, 'error');
+                        console.error('Delete customer error:', error);
+                    }
+                }
+            });
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Ensure modal is hidden on page load
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+
+            setTimeout(() => {
+                document.getElementById('preloader').style.display = 'none';
+                loadData();
+            }, 1000);
+
+            // Attach event listeners
+            document.getElementById('openModalBtn').addEventListener('click', openModal);
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
+        });
     </script>
 </body>
 </html>
