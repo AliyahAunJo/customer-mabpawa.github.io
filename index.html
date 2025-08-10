@@ -75,6 +75,11 @@
             padding: 0.5rem;
             border-radius: 0.25rem;
         }
+        .search-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -84,13 +89,13 @@
 
     <div class="container mx-auto p-6">
         <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ระบบจัดการข้อมูลแว่นตา</h1>
+
         <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
             <div class="modal-content bg-white p-6 rounded-lg">
-                <h2 class="text-2xl font-bold mb-4">บันทึกข้อมูลลูกค้า</h2>
+                <h2 class="text-2xl font-bold mb-4" id="modalTitle">บันทึกข้อมูลลูกค้า</h2>
                 <form id="customerForm">
                     <input type="hidden" name="id">
-                    <!-- Customer Information -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลสมาชิก</h3>
                         <div class="radio-group">
@@ -98,7 +103,6 @@
                             <label><input type="radio" name="member_type" value="new"> ลูกค้าใหม่</label>
                         </div>
                     </div>
-
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลลูกค้า</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -135,8 +139,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- O.D[R] and O.D[L] -->
                     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h3 class="text-xl font-semibold mb-2">O.D[R]</h3>
@@ -167,8 +169,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Lens Information -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลเลนส์</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -177,8 +177,6 @@
                             <div><label class="block text-sm">เลนส์เดิม L</label><input type="text" name="lens_old_l" class="w-full p-2 border rounded"></div>
                         </div>
                     </div>
-
-                    <!-- Primary Rx -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">Primary Rx</h3>
                         <div class="mb-4">
@@ -247,8 +245,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Frame Details -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">โครงสร้างแว่น</h3>
                         <div class="grid grid-cols-2 gap-4">
@@ -270,8 +266,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Order Details -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">รายการแว่น</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -288,10 +282,9 @@
                             <div><label class="block text-sm">คงค้าง</label><input type="number" name="outstanding" class="w-full p-2 border rounded"></div>
                         </div>
                     </div>
-
                     <div class="flex justify-end gap-4">
                         <button type="button" id="closeModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">ยกเลิก</button>
-                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">บันทึก</button>
+                        <button type="submit" id="submitBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">บันทึก</button>
                     </div>
                 </form>
             </div>
@@ -305,16 +298,16 @@
             <div><canvas id="ageRangeChart"></canvas></div>
         </div>
 
-         <div class="flex gap-4 mb-6">
-            <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-                เพิ่มข้อมูลลูกค้า
-            </button>
-            <input type="text" id="searchInput" class="w-full max-w-md p-2 border rounded" placeholder="ค้นหาลูกค้า (ชื่อ, นามสกุล, เบอร์โทร, ที่อยู่)">
-        </div>
-        
         <!-- Data Table -->
         <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
+            <div class="flex gap-4 mb-6 search-group">
+                <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    เพิ่มข้อมูลลูกค้า
+                </button>
+                <input type="text" id="searchInput" class="w-full max-w-md p-2 border rounded" placeholder="ค้นหาลูกค้า (ชื่อ, นามสกุล, เบอร์โทร, ที่อยู่)">
+                <button id="searchBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">ค้นหา</button>
+            </div>
             <table class="w-full table-auto">
                 <thead>
                     <tr class="bg-gray-200">
@@ -354,7 +347,6 @@
         let totalRecords = 0;
         let searchQuery = '';
 
-        // Initialize Flatpickr
         flatpickr("#birth_date", {
             dateFormat: "Y-m-d",
             locale: {
@@ -364,14 +356,15 @@
             }
         });
 
-        // Modal control functions
-        function openModal() {
+        function openModal(isEdit = false, id = null) {
             const modal = document.getElementById('modal');
             const form = document.getElementById('customerForm');
+            const title = document.getElementById('modalTitle');
             modal.classList.remove('hidden');
             form.reset();
-            form.querySelector('[name="id"]').value = ''; // Reset ID for new record
-            document.getElementById('customerForm').onsubmit = handleFormSubmit;
+            form.querySelector('[name="id"]').value = isEdit ? id : '';
+            title.textContent = isEdit ? 'แก้ไขข้อมูลลูกค้า' : 'บันทึกข้อมูลลูกค้า';
+            form.onsubmit = isEdit ? (e) => handleEditSubmit(e, id) : handleFormSubmit;
             flatpickr("#birth_date", {
                 dateFormat: "Y-m-d",
                 locale: {
@@ -395,7 +388,6 @@
             });
         }
 
-        // Enhanced fetch with detailed error handling
         async function makeRequest(payload) {
             try {
                 console.log('Sending request:', payload);
@@ -423,7 +415,6 @@
             }
         }
 
-        // Load customer data with pagination and search
         async function loadData(page = currentPage, limit = pageSize, search = searchQuery) {
             Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
             try {
@@ -441,7 +432,6 @@
             }
         }
 
-        // Display data in table
         function displayData(data) {
             const tableBody = document.getElementById('customerTable');
             tableBody.innerHTML = '';
@@ -471,7 +461,6 @@
             });
         }
 
-        // Update pagination controls
         function updatePagination() {
             const totalPages = Math.ceil(totalRecords / pageSize);
             document.getElementById('pageInfo').textContent = `หน้า ${currentPage} จาก ${totalPages}`;
@@ -479,22 +468,19 @@
             document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalRecords === 0;
         }
 
-        // Update charts
         function updateCharts(data) {
             const genderCounts = { male: 0, female: 0 };
             const memberCounts = { member: 0, new: 0 };
             const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
 
             data.forEach(item => {
-                if (item.gender) genderCounts[item.gender]++;
+                genderCounts[item.gender]++;
                 if (item.member_type === 'member') memberCounts.member++;
                 if (item.member_type === 'new') memberCounts.new++;
-                if (item.age) {
-                    if (item.age <= 20) ageRanges['0-20']++;
-                    else if (item.age <= 40) ageRanges['21-40']++;
-                    else if (item.age <= 60) ageRanges['41-60']++;
-                    else ageRanges['61+']++;
-                }
+                if (item.age <= 20) ageRanges['0-20']++;
+                else if (item.age <= 40) ageRanges['21-40']++;
+                else if (item.age <= 60) ageRanges['41-60']++;
+                else ageRanges['61+']++;
             });
 
             if (genderChart) genderChart.destroy();
@@ -539,14 +525,20 @@
             });
         }
 
-        // Handle form submission for new records
         async function handleFormSubmit(e) {
             e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
             Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
-            delete data.id; // Remove id for new records
+            if (!data.first_name || !data.last_name || !data.member_type) {
+                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกชื่อ, นามสกุล, และประเภทสมาชิก', 'error');
+                submitBtn.disabled = false;
+                return;
+            }
+            delete data.id;
             data.frame_type = formData.getAll('frame_type');
             data.material_index = formData.getAll('material_index');
             data.lens_option = formData.getAll('lens_option');
@@ -569,10 +561,52 @@
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
                 console.error('Form submission error:', error);
+            } finally {
+                submitBtn.disabled = false;
             }
         }
 
-        // Edit customer
+        async function handleEditSubmit(e, id) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            if (!data.first_name || !data.last_name || !data.member_type) {
+                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกชื่อ, นามสกุล, และประเภทสมาชิก', 'error');
+                submitBtn.disabled = false;
+                return;
+            }
+            data.id = parseInt(data.id);
+            data.frame_type = formData.getAll('frame_type');
+            data.material_index = formData.getAll('material_index');
+            data.lens_option = formData.getAll('lens_option');
+            data.lens_design = formData.getAll('lens_design');
+            data.tint = formData.getAll('tint');
+            data.treatment = formData.getAll('treatment');
+            data.wear_type = formData.getAll('wear_type');
+
+            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                if (data[key]) data[key] = parseFloat(data[key]);
+                else data[key] = null;
+            });
+
+            try {
+                console.log('Updating record with ID:', id, 'Data:', data);
+                const result = await makeRequest({ method: 'PUT', id: data.id, data });
+                Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
+                closeModal();
+                loadData();
+            } catch (error) {
+                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
+                console.error('Edit submission error:', error);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
         async function editCustomer(id) {
             if (!id || isNaN(id)) {
                 Swal.fire('เกิดข้อผิดพลาด!', 'ID ไม่ถูกต้อง', 'error');
@@ -586,7 +620,7 @@
                     throw new Error('No record found for the given ID');
                 }
                 console.log('Fetched record for editing:', record);
-                openModal();
+                openModal(true, id);
                 const form = document.getElementById('customerForm');
                 form.querySelector('[name="id"]').value = id;
 
@@ -641,43 +675,12 @@
                         if (input) input.value = value || '';
                     }
                 });
-
-                form.onsubmit = async (e) => {
-                    e.preventDefault();
-                    Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
-                    const formData = new FormData(e.target);
-                    const updatedData = Object.fromEntries(formData);
-                    updatedData.frame_type = formData.getAll('frame_type');
-                    updatedData.material_index = formData.getAll('material_index');
-                    updatedData.lens_option = formData.getAll('lens_option');
-                    updatedData.lens_design = formData.getAll('lens_design');
-                    updatedData.tint = formData.getAll('tint');
-                    updatedData.treatment = formData.getAll('treatment');
-                    updatedData.wear_type = formData.getAll('wear_type');
-
-                    ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
-                        if (updatedData[key]) updatedData[key] = parseFloat(updatedData[key]);
-                        else updatedData[key] = null;
-                    });
-
-                    try {
-                        console.log('Updating record with ID:', id, 'Data:', updatedData);
-                        const result = await makeRequest({ method: 'PUT', id: parseInt(updatedData.id), data: updatedData });
-                        Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
-                        closeModal();
-                        loadData();
-                    } catch (error) {
-                        Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
-                        console.error('Edit customer error:', error);
-                    }
-                };
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลลูกค้า: ${error.message}`, 'error');
                 console.error('Edit customer error:', error);
             }
         }
 
-        // Delete customer
         async function deleteCustomer(id) {
             Swal.fire({
                 title: 'ยืนยันการลบ?',
@@ -701,20 +704,6 @@
             });
         }
 
-        // Debounce function for search
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        // Initialize app
         document.addEventListener('DOMContentLoaded', async () => {
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
@@ -724,17 +713,15 @@
                 loadData();
             }, 1000);
 
-            document.getElementById('openModalBtn').addEventListener('click', openModal);
+            document.getElementById('openModalBtn').addEventListener('click', () => openModal());
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
 
-            const searchInput = document.getElementById('searchInput');
-            const debouncedSearch = debounce((value) => {
-                searchQuery = value.trim();
+            document.getElementById('searchBtn').addEventListener('click', () => {
+                searchQuery = document.getElementById('searchInput').value.trim();
                 currentPage = 1;
                 loadData();
-            }, 500);
-            searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
+            });
 
             document.getElementById('prevPageBtn').addEventListener('click', () => {
                 if (currentPage > 1) {
