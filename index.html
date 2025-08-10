@@ -84,6 +84,13 @@
 
     <div class="container mx-auto p-6">
         <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ระบบจัดการข้อมูลแว่นตา</h1>
+        
+        <div class="flex gap-4 mb-6">
+            <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                เพิ่มข้อมูลลูกค้า
+            </button>
+            <input type="text" id="searchInput" class="w-full max-w-md p-2 border rounded" placeholder="ค้นหาลูกค้า (ชื่อ, นามสกุล, เบอร์โทร, ที่อยู่)">
+        </div>
 
         <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
@@ -305,12 +312,7 @@
             <div><canvas id="totalRecordsChart"></canvas></div>
             <div><canvas id="ageRangeChart"></canvas></div>
         </div>
-        <div class="flex gap-4 mb-6">
-            <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-                เพิ่มข้อมูลลูกค้า
-            </button>
-            <input type="text" id="searchInput" class="w-full max-w-md p-2 border rounded" placeholder="ค้นหาลูกค้า (ชื่อ, นามสกุล, เบอร์โทร, ที่อยู่)">
-        </div>
+
         <!-- Data Table -->
         <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
@@ -366,8 +368,10 @@
         // Modal control functions
         function openModal() {
             const modal = document.getElementById('modal');
+            const form = document.getElementById('customerForm');
             modal.classList.remove('hidden');
-            document.getElementById('customerForm').reset();
+            form.reset();
+            form.querySelector('[name="id"]').value = ''; // Reset ID for new record
             document.getElementById('customerForm').onsubmit = handleFormSubmit;
             flatpickr("#birth_date", {
                 dateFormat: "Y-m-d",
@@ -376,6 +380,9 @@
                     weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
                     months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
                 }
+            });
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
             });
         }
 
@@ -480,13 +487,15 @@
             const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
 
             data.forEach(item => {
-                genderCounts[item.gender]++;
+                if (item.gender) genderCounts[item.gender]++;
                 if (item.member_type === 'member') memberCounts.member++;
                 if (item.member_type === 'new') memberCounts.new++;
-                if (item.age <= 20) ageRanges['0-20']++;
-                else if (item.age <= 40) ageRanges['21-40']++;
-                else if (item.age <= 60) ageRanges['41-60']++;
-                else ageRanges['61+']++;
+                if (item.age) {
+                    if (item.age <= 20) ageRanges['0-20']++;
+                    else if (item.age <= 40) ageRanges['21-40']++;
+                    else if (item.age <= 60) ageRanges['41-60']++;
+                    else ageRanges['61+']++;
+                }
             });
 
             if (genderChart) genderChart.destroy();
@@ -538,11 +547,7 @@
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
-            if (data.id) {
-                Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถใช้ ID สำหรับการเพิ่มข้อมูลใหม่', 'error');
-                console.error('ID present in new record submission:', data.id);
-                return;
-            }
+            delete data.id; // Remove id for new records
             data.frame_type = formData.getAll('frame_type');
             data.material_index = formData.getAll('material_index');
             data.lens_option = formData.getAll('lens_option');
@@ -724,7 +729,6 @@
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
 
-            // Search input event listener
             const searchInput = document.getElementById('searchInput');
             const debouncedSearch = debounce((value) => {
                 searchQuery = value.trim();
@@ -733,7 +737,6 @@
             }, 500);
             searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
 
-            // Pagination event listeners
             document.getElementById('prevPageBtn').addEventListener('click', () => {
                 if (currentPage > 1) {
                     currentPage--;
