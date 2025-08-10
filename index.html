@@ -61,6 +61,20 @@
             align-items: center; 
             gap: 0.5rem; 
         }
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+        }
+        .pagination select {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -70,10 +84,6 @@
 
     <div class="container mx-auto p-6">
         <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ระบบจัดการข้อมูลแว่นตา</h1>
-        
-        <button id="openModalBtn" class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            เพิ่มข้อมูลลูกค้า
-        </button>
 
         <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
@@ -295,7 +305,12 @@
             <div><canvas id="totalRecordsChart"></canvas></div>
             <div><canvas id="ageRangeChart"></canvas></div>
         </div>
-
+        <div class="flex gap-4 mb-6">
+            <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                เพิ่มข้อมูลลูกค้า
+            </button>
+            <input type="text" id="searchInput" class="w-full max-w-md p-2 border rounded" placeholder="ค้นหาลูกค้า (ชื่อ, นามสกุล, เบอร์โทร, ที่อยู่)">
+        </div>
         <!-- Data Table -->
         <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
@@ -311,12 +326,32 @@
                 </thead>
                 <tbody id="customerTable"></tbody>
             </table>
+            <div class="pagination">
+                <div>
+                    <span>แสดง </span>
+                    <select id="pageSizeSelect">
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span> รายการต่อหน้า</span>
+                </div>
+                <div>
+                    <button id="prevPageBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold disabled:opacity-50" disabled>ก่อนหน้า</button>
+                    <span id="pageInfo"></span>
+                    <button id="nextPageBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold disabled:opacity-50" disabled>ถัดไป</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
         let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
+        let currentPage = 1;
+        let pageSize = 20;
+        let totalRecords = 0;
+        let searchQuery = '';
 
         // Initialize Flatpickr
         flatpickr("#birth_date", {
@@ -349,7 +384,6 @@
             modal.classList.add('hidden');
             document.getElementById('customerForm').reset();
             document.getElementById('customerForm').onsubmit = handleFormSubmit;
-            // Reset all checkboxes
             document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 checkbox.checked = false;
             });
@@ -383,14 +417,18 @@
             }
         }
 
-        // Load customer data
-        async function loadData() {
+        // Load customer data with pagination and search
+        async function loadData(page = currentPage, limit = pageSize, search = searchQuery) {
             Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
             try {
-                const data = await makeRequest({ method: 'GET' });
+                const payload = { method: 'GET', page, limit };
+                if (search) payload.search = search;
+                const { data, total } = await makeRequest(payload);
+                totalRecords = total;
                 Swal.close();
                 displayData(data);
                 updateCharts(data);
+                updatePagination();
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูล: ${error.message}`, 'error');
                 console.error('Load data error:', error);
@@ -401,6 +439,10 @@
         function displayData(data) {
             const tableBody = document.getElementById('customerTable');
             tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">ไม่พบข้อมูล</td></tr>';
+                return;
+            }
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
@@ -421,6 +463,14 @@
                 });
                 tableBody.appendChild(tr);
             });
+        }
+
+        // Update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            document.getElementById('pageInfo').textContent = `หน้า ${currentPage} จาก ${totalPages}`;
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalRecords === 0;
         }
 
         // Update charts
@@ -466,7 +516,7 @@
                 type: 'doughnut',
                 data: {
                     labels: ['จำนวนทั้งหมด'],
-                    datasets: [{ data: [data.length], backgroundColor: ['#6366F1'] }]
+                    datasets: [{ data: [totalRecords], backgroundColor: ['#6366F1'] }]
                 },
                 options: { plugins: { title: { display: true, text: 'จำนวนทั้งหมด' } } }
             });
@@ -501,7 +551,6 @@
             data.treatment = formData.getAll('treatment');
             data.wear_type = formData.getAll('wear_type');
 
-            // Convert numeric fields
             ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
                 if (data[key]) data[key] = parseFloat(data[key]);
                 else data[key] = null;
@@ -535,9 +584,8 @@
                 console.log('Fetched record for editing:', record);
                 openModal();
                 const form = document.getElementById('customerForm');
-                form.querySelector('[name="id"]').value = id; // Set ID in hidden input
+                form.querySelector('[name="id"]').value = id;
 
-                // Reset all checkboxes to avoid stale values
                 form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                     checkbox.checked = false;
                 });
@@ -564,9 +612,18 @@
                         const input = form.querySelector(`[name="${key}"]`);
                         if (input) input.value = value !== null ? value : '';
                     } else if (key === 'frame_type' || key === 'material_index' || key === 'lens_option' || key === 'lens_design' || key === 'tint' || key === 'treatment' || key === 'wear_type') {
-                        // Handle array fields (checkboxes)
                         if (Array.isArray(value)) {
                             value.forEach(val => {
+                                const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
+                                if (input) {
+                                    input.checked = true;
+                                } else {
+                                    console.warn(`Checkbox not found for ${key}: ${val}`);
+                                }
+                            });
+                        } else if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+                            const arrayValue = value.replace(/^{|}$/g, '').split(',').map(item => item.trim());
+                            arrayValue.forEach(val => {
                                 const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
                                 if (input) {
                                     input.checked = true;
@@ -594,7 +651,6 @@
                     updatedData.treatment = formData.getAll('treatment');
                     updatedData.wear_type = formData.getAll('wear_type');
 
-                    // Convert numeric fields
                     ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
                         if (updatedData[key]) updatedData[key] = parseFloat(updatedData[key]);
                         else updatedData[key] = null;
@@ -641,9 +697,21 @@
             });
         }
 
+        // Debounce function for search
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', async () => {
-            // Ensure modal is hidden on page load
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
 
@@ -652,10 +720,38 @@
                 loadData();
             }, 1000);
 
-            // Attach event listeners
             document.getElementById('openModalBtn').addEventListener('click', openModal);
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
+
+            // Search input event listener
+            const searchInput = document.getElementById('searchInput');
+            const debouncedSearch = debounce((value) => {
+                searchQuery = value.trim();
+                currentPage = 1;
+                loadData();
+            }, 500);
+            searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
+
+            // Pagination event listeners
+            document.getElementById('prevPageBtn').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadData();
+                }
+            });
+            document.getElementById('nextPageBtn').addEventListener('click', () => {
+                const totalPages = Math.ceil(totalRecords / pageSize);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadData();
+                }
+            });
+            document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+                pageSize = parseInt(e.target.value);
+                currentPage = 1;
+                loadData();
+            });
         });
     </script>
 </body>
