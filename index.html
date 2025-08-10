@@ -26,8 +26,8 @@
             max-height: 80vh; 
             overflow-y: auto; 
             width: 100%; 
-            max-width: 1000px; /* Increased for better form layout */
-            margin: 1rem; /* Ensure margin on small screens */
+            max-width: 1000px; 
+            margin: 1rem; 
         }
         #preloader { 
             position: fixed; 
@@ -47,6 +47,16 @@
             gap: 1rem; 
         }
         .checkbox-group label { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+        }
+        .radio-group { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 1rem; 
+        }
+        .radio-group label { 
             display: flex; 
             align-items: center; 
             gap: 0.5rem; 
@@ -73,7 +83,7 @@
                     <!-- Customer Information -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลสมาชิก</h3>
-                        <div class="checkbox-group">
+                        <div class="radio-group">
                             <label><input type="radio" name="member_type" value="member"> ลูกค้าสมาชิก</label>
                             <label><input type="radio" name="member_type" value="new"> ลูกค้าใหม่</label>
                         </div>
@@ -304,7 +314,6 @@
     </div>
 
     <script>
-        // Replace 'customer_crud' with the actual function name
         const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
         let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
 
@@ -384,7 +393,7 @@
                     <td class="border px-4 py-2">${item.first_name}</td>
                     <td class="border px-4 py-2">${item.last_name}</td>
                     <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
-                    <td class="border px-4 py-2">${Array.isArray(item.member_type) ? item.member_type.join(', ') : item.member_type || ''}</td>
+                    <td class="border px-4 py-2">${item.member_type === 'member' ? 'ลูกค้าสมาชิก' : item.member_type === 'new' ? 'ลูกค้าใหม่' : ''}</td>
                     <td class="border px-4 py-2">
                         <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
                         <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
@@ -407,10 +416,8 @@
 
             data.forEach(item => {
                 genderCounts[item.gender]++;
-                if (Array.isArray(item.member_type)) {
-                    if (item.member_type.includes('member')) memberCounts.member++;
-                    if (item.member_type.includes('new')) memberCounts.new++;
-                }
+                if (item.member_type === 'member') memberCounts.member++;
+                if (item.member_type === 'new') memberCounts.new++;
                 if (item.age <= 20) ageRanges['0-20']++;
                 else if (item.age <= 40) ageRanges['21-40']++;
                 else if (item.age <= 60) ageRanges['41-60']++;
@@ -466,7 +473,6 @@
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
-            data.member_type = formData.getAll('member_type');
             data.frame_type = formData.getAll('frame_type');
             data.material_index = formData.getAll('material_index');
             data.lens_option = formData.getAll('lens_option');
@@ -496,10 +502,16 @@
         async function editCustomer(id) {
             try {
                 const record = await makeRequest({ method: 'GET_BY_ID', id });
+                if (!record) {
+                    throw new Error('No record found for the given ID');
+                }
                 openModal();
                 const form = document.getElementById('customerForm');
                 Object.entries(record).forEach(([key, value]) => {
-                    if (Array.isArray(value)) {
+                    if (key === 'member_type') {
+                        const input = form.querySelector(`input[name="member_type"][value="${value}"]`);
+                        if (input) input.checked = true;
+                    } else if (Array.isArray(value)) {
                         value.forEach(val => {
                             const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
                             if (input) input.checked = true;
@@ -515,7 +527,6 @@
                     Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
                     const formData = new FormData(e.target);
                     const updatedData = Object.fromEntries(formData);
-                    updatedData.member_type = formData.getAll('member_type');
                     updatedData.frame_type = formData.getAll('frame_type');
                     updatedData.material_index = formData.getAll('material_index');
                     updatedData.lens_option = formData.getAll('lens_option');
