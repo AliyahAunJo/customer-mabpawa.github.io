@@ -349,6 +349,10 @@
             modal.classList.add('hidden');
             document.getElementById('customerForm').reset();
             document.getElementById('customerForm').onsubmit = handleFormSubmit;
+            // Reset all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
         }
 
         // Enhanced fetch with detailed error handling
@@ -532,6 +536,12 @@
                 openModal();
                 const form = document.getElementById('customerForm');
                 form.querySelector('[name="id"]').value = id; // Set ID in hidden input
+
+                // Reset all checkboxes to avoid stale values
+                form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+
                 Object.entries(record).forEach(([key, value]) => {
                     if (key === 'member_type') {
                         const input = form.querySelector(`input[name="member_type"][value="${value}"]`);
@@ -553,11 +563,18 @@
                     } else if (key === 'outstanding') {
                         const input = form.querySelector(`[name="${key}"]`);
                         if (input) input.value = value !== null ? value : '';
-                    } else if (Array.isArray(value)) {
-                        value.forEach(val => {
-                            const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
-                            if (input) input.checked = true;
-                        });
+                    } else if (key === 'frame_type' || key === 'material_index' || key === 'lens_option' || key === 'lens_design' || key === 'tint' || key === 'treatment' || key === 'wear_type') {
+                        // Handle array fields (checkboxes)
+                        if (Array.isArray(value)) {
+                            value.forEach(val => {
+                                const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
+                                if (input) {
+                                    input.checked = true;
+                                } else {
+                                    console.warn(`Checkbox not found for ${key}: ${val}`);
+                                }
+                            });
+                        }
                     } else {
                         const input = form.querySelector(`[name="${key}"]`);
                         if (input) input.value = value || '';
