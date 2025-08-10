@@ -443,9 +443,9 @@
                 const tr = document.createElement('tr');
                 tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
                 tr.innerHTML = `
-                    <td class="border px-4 py-2">${item.first_name}</td>
-                    <td class="border px-4 py-2">${item.last_name}</td>
-                    <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
+                    <td class="border px-4 py-2">${item.first_name || ''}</td>
+                    <td class="border px-4 py-2">${item.last_name || ''}</td>
+                    <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : item.gender === 'female' ? 'หญิง' : ''}</td>
                     <td class="border px-4 py-2">${item.member_type === 'member' ? 'ลูกค้าสมาชิก' : item.member_type === 'new' ? 'ลูกค้าใหม่' : ''}</td>
                     <td class="border px-4 py-2">
                         <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
@@ -474,13 +474,15 @@
             const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
 
             data.forEach(item => {
-                genderCounts[item.gender]++;
+                if (item.gender) genderCounts[item.gender]++;
                 if (item.member_type === 'member') memberCounts.member++;
                 if (item.member_type === 'new') memberCounts.new++;
-                if (item.age <= 20) ageRanges['0-20']++;
-                else if (item.age <= 40) ageRanges['21-40']++;
-                else if (item.age <= 60) ageRanges['41-60']++;
-                else ageRanges['61+']++;
+                if (item.age) {
+                    if (item.age <= 20) ageRanges['0-20']++;
+                    else if (item.age <= 40) ageRanges['21-40']++;
+                    else if (item.age <= 60) ageRanges['41-60']++;
+                    else ageRanges['61+']++;
+                }
             });
 
             if (genderChart) genderChart.destroy();
@@ -525,6 +527,45 @@
             });
         }
 
+        function prepareFormData(formData) {
+            const data = Object.fromEntries(formData);
+            const arrayFields = ['frame_type', 'material_index', 'lens_option', 'lens_design', 'tint', 'treatment', 'wear_type'];
+            arrayFields.forEach(field => {
+                data[field] = formData.getAll(field).filter(val => val !== 'Other');
+                if (data[field].length === 0) data[field] = null; // Supabase expects null for empty arrays
+            });
+
+            // Handle "Other" fields
+            if (data.material_index_other) {
+                if (data.material_index) {
+                    data.material_index.push(data.material_index_other);
+                } else {
+                    data.material_index = [data.material_index_other];
+                }
+            }
+            if (data.lens_option_other) {
+                if (data.lens_option) {
+                    data.lens_option.push(data.lens_option_other);
+                } else {
+                    data.lens_option = [data.lens_option_other];
+                }
+            }
+            delete data.material_index_other;
+            delete data.lens_option_other;
+
+            // Convert numeric fields
+            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                data[key] = data[key] ? parseFloat(data[key]) : null;
+            });
+
+            // Ensure optional fields are null if empty
+            ['birth_date', 'phone', 'address', 'od_r_sphere', 'od_r_cyl', 'od_r_axis', 'od_r_add', 'od_r_dpd', 'od_r_npd', 'od_r_seght', 'od_r_prism', 'od_r_mono_va', 'od_l_sphere', 'od_l_cyl', 'od_l_axis', 'od_l_add', 'od_l_dpd', 'od_l_npd', 'od_l_seght', 'od_l_prism', 'od_l_mono_va', 'va_both_eyes', 'lens_old_r', 'lens_old_l', 'lens_type', 'tint_color', 'bvd', 'pta', 'wrap', 'bcl', 'frame_bridge', 'frame_height', 'frame_width', 'frame_diagonal', 'frame_brand', 'frame_model', 'notes', 'examiner', 'buyer'].forEach(key => {
+                if (!data[key]) data[key] = null;
+            });
+
+            return data;
+        }
+
         async function handleFormSubmit(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -532,25 +573,13 @@
             Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
 
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            if (!data.first_name || !data.last_name || !data.member_type) {
-                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกชื่อ, นามสกุล, และประเภทสมาชิก', 'error');
+            const data = prepareFormData(formData);
+
+            if (!data.first_name || !data.last_name || !data.member_type || !data.age || !data.gender || !data.phone || !data.address) {
+                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกข้อมูลที่จำเป็น: ชื่อ, นามสกุล, ประเภทสมาชิก, อายุ, เพศ, เบอร์โทร, ที่อยู่', 'error');
                 submitBtn.disabled = false;
                 return;
             }
-            delete data.id;
-            data.frame_type = formData.getAll('frame_type');
-            data.material_index = formData.getAll('material_index');
-            data.lens_option = formData.getAll('lens_option');
-            data.lens_design = formData.getAll('lens_design');
-            data.tint = formData.getAll('tint');
-            data.treatment = formData.getAll('treatment');
-            data.wear_type = formData.getAll('wear_type');
-
-            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
-                if (data[key]) data[key] = parseFloat(data[key]);
-                else data[key] = null;
-            });
 
             try {
                 console.log('Submitting new record:', data);
@@ -573,29 +602,18 @@
             Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
 
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            if (!data.first_name || !data.last_name || !data.member_type) {
-                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกชื่อ, นามสกุล, และประเภทสมาชิก', 'error');
+            const data = prepareFormData(formData);
+            data.id = parseInt(id);
+
+            if (!data.first_name || !data.last_name || !data.member_type || !data.age || !data.gender || !data.phone || !data.address) {
+                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกข้อมูลที่จำเป็น: ชื่อ, นามสกุล, ประเภทสมาชิก, อายุ, เพศ, เบอร์โทร, ที่อยู่', 'error');
                 submitBtn.disabled = false;
                 return;
             }
-            data.id = parseInt(data.id);
-            data.frame_type = formData.getAll('frame_type');
-            data.material_index = formData.getAll('material_index');
-            data.lens_option = formData.getAll('lens_option');
-            data.lens_design = formData.getAll('lens_design');
-            data.tint = formData.getAll('tint');
-            data.treatment = formData.getAll('treatment');
-            data.wear_type = formData.getAll('wear_type');
-
-            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
-                if (data[key]) data[key] = parseFloat(data[key]);
-                else data[key] = null;
-            });
 
             try {
                 console.log('Updating record with ID:', id, 'Data:', data);
-                const result = await makeRequest({ method: 'PUT', id: data.id, data });
+                const result = await makeRequest({ method: 'PUT', id, data });
                 Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
                 closeModal();
                 loadData();
@@ -646,33 +664,20 @@
                                 }
                             });
                         }
-                    } else if (key === 'outstanding') {
-                        const input = form.querySelector(`[name="${key}"]`);
-                        if (input) input.value = value !== null ? value : '';
-                    } else if (key === 'frame_type' || key === 'material_index' || key === 'lens_option' || key === 'lens_design' || key === 'tint' || key === 'treatment' || key === 'wear_type') {
+                    } else if (key === 'material_index' || key === 'lens_option' || key === 'lens_design' || key === 'tint' || key === 'treatment' || key === 'wear_type' || key === 'frame_type') {
                         if (Array.isArray(value)) {
                             value.forEach(val => {
                                 const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
                                 if (input) {
                                     input.checked = true;
-                                } else {
-                                    console.warn(`Checkbox not found for ${key}: ${val}`);
-                                }
-                            });
-                        } else if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
-                            const arrayValue = value.replace(/^{|}$/g, '').split(',').map(item => item.trim());
-                            arrayValue.forEach(val => {
-                                const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
-                                if (input) {
-                                    input.checked = true;
-                                } else {
-                                    console.warn(`Checkbox not found for ${key}: ${val}`);
+                                } else if (val && (key === 'material_index' || key === 'lens_option')) {
+                                    form.querySelector(`[name="${key}_other"]`).value = val;
                                 }
                             });
                         }
                     } else {
                         const input = form.querySelector(`[name="${key}"]`);
-                        if (input) input.value = value || '';
+                        if (input) input.value = value ?? '';
                     }
                 });
             } catch (error) {
