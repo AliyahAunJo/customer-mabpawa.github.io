@@ -80,6 +80,93 @@
             gap: 0.5rem;
             align-items: center;
         }
+        .readonly-field {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+        /* สีพื้นหลังและกรอบตารางข้อมูลลูกค้าเป็นสีชมพูพาสเทล */
+        .customer-table-container {
+            border: 2px solid #FFE4E1; /* ชมพูพาสเทลอ่อน */
+            border-radius: 0.5rem;
+            background-color: #FFF1F2; /* ชมพูพาสเทลอ่อน */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* สีพื้นหลังและขอบหัวข้อหลักใน Modal */
+        .modal-content h3, .modal-content h4 {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem; /* ขอบมน */
+            margin-bottom: 0.5rem;
+            border: 1px solid;
+        }
+        /* ข้อมูลสมาชิก */
+        .modal-content h3:nth-child(1) {
+            background-color: #E0F2FE; /* ฟ้าอ่อนพาสเทล */
+            border-color: #7DD3FC; /* ขอบฟ้าเข้มกว่า */
+        }
+        /* ข้อมูลลูกค้า */
+        .modal-content h3:nth-child(3) {
+            background-color: #DCFCE7; /* เขียวอ่อนพาสเทล */
+            border-color: #86EFAC; /* ขอบเขียวเข้มกว่า */
+        }
+        /* O.D[R] */
+        .modal-content h3:nth-child(5) {
+            background-color: #F3E8FF; /* ม่วงอ่อนพาสเทล */
+            border-color: #D8B4FE; /* ขอบม่วงเข้มกว่า */
+        }
+        /* O.D[L] */
+        .modal-content h3:nth-child(7) {
+            background-color: #FEF9C3; /* เหลืองอ่อนพาสเทล */
+            border-color: #FDE68A; /* ขอบเหลืองเข้มกว่า */
+        }
+        /* ข้อมูลเลนส์ */
+        .modal-content h3:nth-child(9) {
+            background-color: #FFEDD5; /* ส้มอ่อนพาสเทล */
+            border-color: #FDBA74; /* ขอบส้มเข้มกว่า */
+        }
+        /* Primary Rx */
+        .modal-content h3:nth-child(11) {
+            background-color: #D1FAE5; /* มินต์อ่อนพาสเทล */
+            border-color: #6EE7B7; /* ขอบมินต์เข้มกว่า */
+        }
+        /* โครงสร้างแว่น */
+        .modal-content h3:nth-child(13) {
+            background-color: #FEE2E2; /* แดงอ่อนพาสเทล */
+            border-color: #FCA5A5; /* ขอบแดงเข้มกว่า */
+        }
+        /* รายการแว่น */
+        .modal-content h3:nth-child(15) {
+            background-color: #FCE7F3; /* ชมพูอ่อนพาสเทล */
+            border-color: #F9A8D4; /* ขอบชมพูเข้มกว่า */
+        }
+        /* หัวข้อย่อยใน Primary Rx และ โครงสร้างแว่น */
+        .modal-content h4:nth-child(2) { /* Material Index */
+            background-color: #E0F2FE;
+            border-color: #7DD3FC;
+        }
+        .modal-content h4:nth-child(4) { /* Option */
+            background-color: #DCFCE7;
+            border-color: #86EFAC;
+        }
+        .modal-content h4:nth-child(6) { /* Lens Design */
+            background-color: #F3E8FF;
+            border-color: #D8B4FE;
+        }
+        .modal-content h4:nth-child(8) { /* ทำสี (Tint) */
+            background-color: #FEF9C3;
+            border-color: #FDE68A;
+        }
+        .modal-content h4:nth-child(10) { /* Treatment (เคลือบ) */
+            background-color: #FFEDD5;
+            border-color: #FDBA74;
+        }
+        .modal-content h4:nth-child(12) { /* Wear Type */
+            background-color: #D1FAE5;
+            border-color: #6EE7B7;
+        }
+        .modal-content h4:nth-child(14) { /* ลักษณะเข้ากรอบ */
+            background-color: #FEE2E2;
+            border-color: #FCA5A5;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -299,7 +386,7 @@
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white p-6 rounded-lg shadow">
+        <div class="customer-table-container p-6">
             <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
             <div class="flex gap-4 mb-6 search-group">
                 <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
@@ -356,36 +443,72 @@
             }
         });
 
-        function openModal(isEdit = false, id = null) {
+        function openModal(isView = false, id = null) {
             const modal = document.getElementById('modal');
             const form = document.getElementById('customerForm');
             const title = document.getElementById('modalTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const closeBtn = document.getElementById('closeModalBtn');
             modal.classList.remove('hidden');
             form.reset();
-            form.querySelector('[name="id"]').value = isEdit ? id : '';
-            title.textContent = isEdit ? 'แก้ไขข้อมูลลูกค้า' : 'บันทึกข้อมูลลูกค้า';
-            form.onsubmit = isEdit ? (e) => handleEditSubmit(e, id) : handleFormSubmit;
+            form.querySelector('[name="id"]').value = ''; // Ensure id is cleared
+            title.textContent = isView ? 'ดูข้อมูลลูกค้า' : 'บันทึกข้อมูลลูกค้า';
+            submitBtn.style.display = isView ? 'none' : 'inline-block';
+            closeBtn.textContent = isView ? 'ปิด' : 'ยกเลิก';
+            form.onsubmit = isView ? (e) => e.preventDefault() : handleFormSubmit;
+
+            // Set fields to read-only for view mode
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.readOnly = isView;
+                input.disabled = isView;
+                if (isView) {
+                    input.classList.add('readonly-field');
+                } else {
+                    input.classList.remove('readonly-field');
+                }
+            });
+
             flatpickr("#birth_date", {
                 dateFormat: "Y-m-d",
                 locale: {
                     firstDayOfWeek: 1,
                     weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
                     months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
-                }
+                },
+                disableMobile: isView // Disable flatpickr interaction in view mode
             });
+
             document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 checkbox.checked = false;
+                checkbox.disabled = isView;
+                if (isView) {
+                    checkbox.classList.add('readonly-field');
+                } else {
+                    checkbox.classList.remove('readonly-field');
+                }
             });
         }
 
         function closeModal() {
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
-            document.getElementById('customerForm').reset();
-            document.getElementById('customerForm').onsubmit = handleFormSubmit;
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
+            const form = document.getElementById('customerForm');
+            form.reset();
+            form.querySelector('[name="id"]').value = ''; // Ensure id is cleared
+            form.onsubmit = handleFormSubmit;
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.readOnly = false;
+                input.disabled = false;
+                input.classList.remove('readonly-field');
             });
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.disabled = false;
+                checkbox.classList.remove('readonly-field');
+            });
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            document.getElementById('closeModalBtn').textContent = 'ยกเลิก';
         }
 
         async function makeRequest(payload) {
@@ -448,11 +571,11 @@
                     <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : item.gender === 'female' ? 'หญิง' : ''}</td>
                     <td class="border px-4 py-2">${item.member_type === 'member' ? 'ลูกค้าสมาชิก' : item.member_type === 'new' ? 'ลูกค้าใหม่' : ''}</td>
                     <td class="border px-4 py-2">
-                        <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
+                        <button class="view-btn bg-green-500 hover:bg-green-600 text-white py-1 px-2 rounded">ดูข้อมูล</button>
                         <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
                     </td>
                 `;
-                tr.querySelector('.edit-btn').addEventListener('click', () => editCustomer(item.id));
+                tr.querySelector('.view-btn').addEventListener('click', () => viewCustomer(item.id));
                 tr.querySelector('.delete-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     deleteCustomer(item.id);
@@ -563,6 +686,9 @@
                 if (!data[key]) data[key] = null;
             });
 
+            // Remove id to prevent duplicate key errors
+            delete data.id;
+
             return data;
         }
 
@@ -595,49 +721,19 @@
             }
         }
 
-        async function handleEditSubmit(e, id) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
-
-            const formData = new FormData(e.target);
-            const data = prepareFormData(formData);
-            data.id = parseInt(id);
-
-            if (!data.first_name || !data.last_name || !data.member_type || !data.age || !data.gender || !data.phone || !data.address) {
-                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกข้อมูลที่จำเป็น: ชื่อ, นามสกุล, ประเภทสมาชิก, อายุ, เพศ, เบอร์โทร, ที่อยู่', 'error');
-                submitBtn.disabled = false;
-                return;
-            }
-
-            try {
-                console.log('Updating record with ID:', id, 'Data:', data);
-                const result = await makeRequest({ method: 'PUT', id, data });
-                Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
-                closeModal();
-                loadData();
-            } catch (error) {
-                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
-                console.error('Edit submission error:', error);
-            } finally {
-                submitBtn.disabled = false;
-            }
-        }
-
-        async function editCustomer(id) {
+        async function viewCustomer(id) {
             if (!id || isNaN(id)) {
                 Swal.fire('เกิดข้อผิดพลาด!', 'ID ไม่ถูกต้อง', 'error');
                 console.error('Invalid ID:', id);
                 return;
             }
-            console.log('Editing customer with ID:', id);
+            console.log('Viewing customer with ID:', id);
             try {
                 const record = await makeRequest({ method: 'GET_BY_ID', id });
                 if (!record) {
                     throw new Error('No record found for the given ID');
                 }
-                console.log('Fetched record for editing:', record);
+                console.log('Fetched record for viewing:', record);
                 openModal(true, id);
                 const form = document.getElementById('customerForm');
                 form.querySelector('[name="id"]').value = id;
@@ -661,7 +757,8 @@
                                     firstDayOfWeek: 1,
                                     weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
                                     months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
-                                }
+                                },
+                                disableMobile: true
                             });
                         }
                     } else if (key === 'material_index' || key === 'lens_option' || key === 'lens_design' || key === 'tint' || key === 'treatment' || key === 'wear_type' || key === 'frame_type') {
@@ -682,7 +779,7 @@
                 });
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลลูกค้า: ${error.message}`, 'error');
-                console.error('Edit customer error:', error);
+                console.error('View customer error:', error);
             }
         }
 
