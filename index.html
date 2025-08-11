@@ -427,7 +427,7 @@
     </div>
 
     <script>
-        const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
+        const CUSTOMER_WEB = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
         let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
         let currentPage = 1;
         let pageSize = 20;
@@ -514,7 +514,7 @@
         async function makeRequest(payload) {
             try {
                 console.log('Sending request:', payload);
-                const response = await fetch(SUPABASE_FUNCTIONS_URL, {
+                const response = await fetch(CUSTOMER_WEB, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
