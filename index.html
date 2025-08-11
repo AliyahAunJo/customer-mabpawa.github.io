@@ -41,12 +41,12 @@
             justify-content: center;
             align-items: center;
         }
-        .checkbox-group { 
+        .checkbox-group, .radio-group { 
             display: flex; 
             flex-wrap: wrap; 
             gap: 1rem; 
         }
-        .checkbox-group label { 
+        .checkbox-group label, .radio-group label { 
             display: flex; 
             align-items: center; 
             gap: 0.5rem; 
@@ -120,7 +120,7 @@
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลสมาชิก</h3>
                         <div class="radio-group">
-                            <label><input type="radio" name="member_type" value="member"> ลูกค้าสมาชิก</label>
+                            <label><input type="radio" name="member_type" value="member" required> ลูกค้าสมาชิก</label>
                             <label><input type="radio" name="member_type" value="new"> ลูกค้าใหม่</label>
                         </div>
                     </div>
@@ -345,15 +345,19 @@
         function openModal() {
             const modal = document.getElementById('modal');
             modal.classList.remove('hidden');
-            document.getElementById('customerForm').reset();
-            document.getElementById('customerForm').onsubmit = handleFormSubmit;
+            const form = document.getElementById('customerForm');
+            form.reset();
+            form.onsubmit = null; // Clear any existing submit handlers
+            form.onsubmit = handleFormSubmit;
         }
 
         function closeModal() {
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
-            document.getElementById('customerForm').reset();
-            document.getElementById('customerForm').onsubmit = handleFormSubmit;
+            const form = document.getElementById('customerForm');
+            form.reset();
+            form.onsubmit = null; // Clear submit handler
+            form.onsubmit = handleFormSubmit;
         }
 
         // Enhanced fetch with detailed error handling
@@ -410,11 +414,14 @@
             paginatedData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
+                const memberTypeDisplay = Array.isArray(item.member_type) && item.member_type.length > 0 
+                    ? (item.member_type[0] === 'member' ? 'ลูกค้าสมาชิก' : 'ลูกค้าใหม่') 
+                    : '-';
                 tr.innerHTML = `
                     <td class="border px-4 py-2">${item.first_name}</td>
                     <td class="border px-4 py-2">${item.last_name}</td>
                     <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
-                    <td class="border px-4 py-2">${Array.isArray(item.member_type) && item.member_type.length ? (item.member_type[0] === 'member' ? 'ลูกค้าสมาชิก' : 'ลูกค้าใหม่') : ''}</td>
+                    <td class="border px-4 py-2">${memberTypeDisplay}</td>
                     <td class="border px-4 py-2">
                         <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
                         <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
@@ -479,9 +486,9 @@
 
             data.forEach(item => {
                 genderCounts[item.gender]++;
-                if (Array.isArray(item.member_type) && item.member_type.length) {
+                if (Array.isArray(item.member_type) && item.member_type.length > 0) {
                     if (item.member_type[0] === 'member') memberCounts.member++;
-                    if (item.member_type[0] === 'new') memberCounts.new++;
+                    else if (item.member_type[0] === 'new') memberCounts.new++;
                 }
                 if (item.age <= 20) ageRanges['0-20']++;
                 else if (item.age <= 40) ageRanges['21-40']++;
@@ -538,7 +545,7 @@
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
-            data.member_type = formData.getAll('member_type');
+            data.member_type = [formData.get('member_type')].filter(Boolean); // Ensure single value array
             data.frame_type = formData.getAll('frame_type');
             data.material_index = formData.getAll('material_index');
             data.lens_option = formData.getAll('lens_option');
@@ -599,13 +606,14 @@
                     }
                 });
 
-                // Update form submission for editing
+                // Set submit handler for editing
+                form.onsubmit = null; // Clear any existing submit handlers
                 form.onsubmit = async (e) => {
                     e.preventDefault();
                     Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
                     const formData = new FormData(e.target);
                     const updatedData = Object.fromEntries(formData);
-                    updatedData.member_type = formData.getAll('member_type');
+                    updatedData.member_type = [formData.get('member_type')].filter(Boolean); // Ensure single value array
                     updatedData.frame_type = formData.getAll('frame_type');
                     updatedData.material_index = formData.getAll('material_index');
                     updatedData.lens_option = formData.getAll('lens_option');
