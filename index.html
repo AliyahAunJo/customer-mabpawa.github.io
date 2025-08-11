@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<!—Customer-web—>
+ <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -26,8 +27,8 @@
             max-height: 80vh; 
             overflow-y: auto; 
             width: 100%; 
-            max-width: 1000px; 
-            margin: 1rem; 
+            max-width: 1000px; /* Increased for better form layout */
+            margin: 1rem; /* Ensure margin on small screens */
         }
         #preloader { 
             position: fixed; 
@@ -51,122 +52,6 @@
             align-items: center; 
             gap: 0.5rem; 
         }
-        .radio-group { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 1rem; 
-        }
-        .radio-group label { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-        }
-        .pagination {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-        }
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
-        }
-        .pagination select {
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-        }
-        .search-group {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .readonly-field {
-            background-color: #f3f4f6;
-            cursor: not-allowed;
-        }
-        /* สีพื้นหลังและกรอบตารางข้อมูลลูกค้าเป็นสีชมพูพาสเทล */
-        .customer-table-container {
-            border: 2px solid #FFE4E1; /* ชมพูพาสเทลอ่อน */
-            border-radius: 0.5rem;
-            background-color: #FFF1F2; /* ชมพูพาสเทลอ่อน */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        /* สีพื้นหลังและขอบหัวข้อหลักใน Modal */
-        .modal-content h3, .modal-content h4 {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem; /* ขอบมน */
-            margin-bottom: 0.5rem;
-            border: 1px solid;
-        }
-        /* ข้อมูลสมาชิก */
-        .modal-content h3:nth-child(1) {
-            background-color: #E0F2FE; /* ฟ้าอ่อนพาสเทล */
-            border-color: #7DD3FC; /* ขอบฟ้าเข้มกว่า */
-        }
-        /* ข้อมูลลูกค้า */
-        .modal-content h3:nth-child(3) {
-            background-color: #DCFCE7; /* เขียวอ่อนพาสเทล */
-            border-color: #86EFAC; /* ขอบเขียวเข้มกว่า */
-        }
-        /* O.D[R] */
-        .modal-content h3:nth-child(5) {
-            background-color: #F3E8FF; /* ม่วงอ่อนพาสเทล */
-            border-color: #D8B4FE; /* ขอบม่วงเข้มกว่า */
-        }
-        /* O.D[L] */
-        .modal-content h3:nth-child(7) {
-            background-color: #FEF9C3; /* เหลืองอ่อนพาสเทล */
-            border-color: #FDE68A; /* ขอบเหลืองเข้มกว่า */
-        }
-        /* ข้อมูลเลนส์ */
-        .modal-content h3:nth-child(9) {
-            background-color: #FFEDD5; /* ส้มอ่อนพาสเทล */
-            border-color: #FDBA74; /* ขอบส้มเข้มกว่า */
-        }
-        /* Primary Rx */
-        .modal-content h3:nth-child(11) {
-            background-color: #D1FAE5; /* มินต์อ่อนพาสเทล */
-            border-color: #6EE7B7; /* ขอบมินต์เข้มกว่า */
-        }
-        /* โครงสร้างแว่น */
-        .modal-content h3:nth-child(13) {
-            background-color: #FEE2E2; /* แดงอ่อนพาสเทล */
-            border-color: #FCA5A5; /* ขอบแดงเข้มกว่า */
-        }
-        /* รายการแว่น */
-        .modal-content h3:nth-child(15) {
-            background-color: #FCE7F3; /* ชมพูอ่อนพาสเทล */
-            border-color: #F9A8D4; /* ขอบชมพูเข้มกว่า */
-        }
-        /* หัวข้อย่อยใน Primary Rx และ โครงสร้างแว่น */
-        .modal-content h4:nth-child(2) { /* Material Index */
-            background-color: #E0F2FE;
-            border-color: #7DD3FC;
-        }
-        .modal-content h4:nth-child(4) { /* Option */
-            background-color: #DCFCE7;
-            border-color: #86EFAC;
-        }
-        .modal-content h4:nth-child(6) { /* Lens Design */
-            background-color: #F3E8FF;
-            border-color: #D8B4FE;
-        }
-        .modal-content h4:nth-child(8) { /* ทำสี (Tint) */
-            background-color: #FEF9C3;
-            border-color: #FDE68A;
-        }
-        .modal-content h4:nth-child(10) { /* Treatment (เคลือบ) */
-            background-color: #FFEDD5;
-            border-color: #FDBA74;
-        }
-        .modal-content h4:nth-child(12) { /* Wear Type */
-            background-color: #D1FAE5;
-            border-color: #6EE7B7;
-        }
-        .modal-content h4:nth-child(14) { /* ลักษณะเข้ากรอบ */
-            background-color: #FEE2E2;
-            border-color: #FCA5A5;
-        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -176,26 +61,31 @@
 
     <div class="container mx-auto p-6">
         <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ระบบจัดการข้อมูลแว่นตา</h1>
+        
+        <button id="openModalBtn" class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            เพิ่มข้อมูลลูกค้า
+        </button>
 
         <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
             <div class="modal-content bg-white p-6 rounded-lg">
-                <h2 class="text-2xl font-bold mb-4" id="modalTitle">บันทึกข้อมูลลูกค้า</h2>
+                <h2 class="text-2xl font-bold mb-4">บันทึกข้อมูลลูกค้า</h2>
                 <form id="customerForm">
-                    <input type="hidden" name="id">
+                    <!-- Customer Information -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลสมาชิก</h3>
-                        <div class="radio-group">
+                        <div class="checkbox-group">
                             <label><input type="radio" name="member_type" value="member"> ลูกค้าสมาชิก</label>
                             <label><input type="radio" name="member_type" value="new"> ลูกค้าใหม่</label>
                         </div>
                     </div>
+
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลลูกค้า</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium">วันเดือนปี</label>
-                                <input type="text" id="birth_date" name="birth_date" class="flatpickr w-full p-2 border rounded">
+                                <input type="text" id="birth_date" class="flatpickr w-full p-2 border rounded">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium">ชื่อ</label>
@@ -226,6 +116,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- O.D[R] and O.D[L] -->
                     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h3 class="text-xl font-semibold mb-2">O.D[R]</h3>
@@ -256,6 +148,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Lens Information -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">ข้อมูลเลนส์</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -264,6 +158,8 @@
                             <div><label class="block text-sm">เลนส์เดิม L</label><input type="text" name="lens_old_l" class="w-full p-2 border rounded"></div>
                         </div>
                     </div>
+
+                    <!-- Primary Rx -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">Primary Rx</h3>
                         <div class="mb-4">
@@ -332,6 +228,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Frame Details -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">โครงสร้างแว่น</h3>
                         <div class="grid grid-cols-2 gap-4">
@@ -353,6 +251,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Order Details -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold mb-2">รายการแว่น</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -369,9 +269,10 @@
                             <div><label class="block text-sm">คงค้าง</label><input type="number" name="outstanding" class="w-full p-2 border rounded"></div>
                         </div>
                     </div>
+
                     <div class="flex justify-end gap-4">
                         <button type="button" id="closeModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">ยกเลิก</button>
-                        <button type="submit" id="submitBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">บันทึก</button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">บันทึก</button>
                     </div>
                 </form>
             </div>
@@ -386,15 +287,8 @@
         </div>
 
         <!-- Data Table -->
-        <div class="customer-table-container p-6">
+        <div class="bg-white p-6 rounded-lg shadow">
             <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
-            <div class="flex gap-4 mb-6 search-group">
-                <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-                    เพิ่มข้อมูลลูกค้า
-                </button>
-                <input type="text" id="searchInput" class="w-full max-w-md p-2 border rounded" placeholder="ค้นหาลูกค้า (ชื่อ, นามสกุล, เบอร์โทร, ที่อยู่)">
-                <button id="searchBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">ค้นหา</button>
-            </div>
             <table class="w-full table-auto">
                 <thead>
                     <tr class="bg-gray-200">
@@ -407,34 +301,15 @@
                 </thead>
                 <tbody id="customerTable"></tbody>
             </table>
-            <div class="pagination">
-                <div>
-                    <span>แสดง </span>
-                    <select id="pageSizeSelect">
-                        <option value="20" selected>20</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    <span> รายการต่อหน้า</span>
-                </div>
-                <div>
-                    <button id="prevPageBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold disabled:opacity-50" disabled>ก่อนหน้า</button>
-                    <span id="pageInfo"></span>
-                    <button id="nextPageBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold disabled:opacity-50" disabled>ถัดไป</button>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-        // ดึง environment variable ใหม่จาก Supabase
-        let SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
+        // Replace 'customer_crud' with the actual function name
+        const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
         let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
-        let currentPage = 1;
-        let pageSize = 20;
-        let totalRecords = 0;
-        let searchQuery = '';
 
+        // Initialize Flatpickr
         flatpickr("#birth_date", {
             dateFormat: "Y-m-d",
             locale: {
@@ -444,77 +319,24 @@
             }
         });
 
-        function openModal(isView = false, id = null) {
+        // Modal control functions
+        function openModal() {
             const modal = document.getElementById('modal');
-            const form = document.getElementById('customerForm');
-            const title = document.getElementById('modalTitle');
-            const submitBtn = document.getElementById('submitBtn');
-            const closeBtn = document.getElementById('closeModalBtn');
             modal.classList.remove('hidden');
-            form.reset();
-            form.querySelector('[name="id"]').value = ''; // Ensure id is cleared
-            title.textContent = isView ? 'ดูข้อมูลลูกค้า' : 'บันทึกข้อมูลลูกค้า';
-            submitBtn.style.display = isView ? 'none' : 'inline-block';
-            closeBtn.textContent = isView ? 'ปิด' : 'ยกเลิก';
-            form.onsubmit = isView ? (e) => e.preventDefault() : handleFormSubmit;
-
-            // Set fields to read-only for view mode
-            const inputs = form.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => {
-                input.readOnly = isView;
-                input.disabled = isView;
-                if (isView) {
-                    input.classList.add('readonly-field');
-                } else {
-                    input.classList.remove('readonly-field');
-                }
-            });
-
-            flatpickr("#birth_date", {
-                dateFormat: "Y-m-d",
-                locale: {
-                    firstDayOfWeek: 1,
-                    weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
-                    months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.,', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
-                },
-                disableMobile: isView // Disable flatpickr interaction in view mode
-            });
-
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
-                checkbox.disabled = isView;
-                if (isView) {
-                    checkbox.classList.add('readonly-field');
-                } else {
-                    checkbox.classList.remove('readonly-field');
-                }
-            });
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerForm').onsubmit = handleFormSubmit;
         }
 
         function closeModal() {
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
-            const form = document.getElementById('customerForm');
-            form.reset();
-            form.querySelector('[name="id"]').value = ''; // Ensure id is cleared
-            form.onsubmit = handleFormSubmit;
-            const inputs = form.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => {
-                input.readOnly = false;
-                input.disabled = false;
-                input.classList.remove('readonly-field');
-            });
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.disabled = false;
-                checkbox.classList.remove('readonly-field');
-            });
-            document.getElementById('submitBtn').style.display = 'inline-block';
-            document.getElementById('closeModalBtn').textContent = 'ยกเลิก';
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerForm').onsubmit = handleFormSubmit;
         }
 
+        // Enhanced fetch with detailed error handling
         async function makeRequest(payload) {
             try {
-                console.log('Sending request to:', SUPABASE_FUNCTIONS_URL, 'with payload:', payload);
                 const response = await fetch(SUPABASE_FUNCTIONS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -531,7 +353,6 @@
                 }
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
-                console.log('Request response:', data);
                 return data;
             } catch (error) {
                 console.error('Fetch error:', error);
@@ -539,44 +360,38 @@
             }
         }
 
-        async function loadData(page = currentPage, limit = pageSize, search = searchQuery) {
+        // Load customer data
+        async function loadData() {
             Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
             try {
-                const payload = { method: 'GET', page, limit };
-                if (search) payload.search = search;
-                const { data, total } = await makeRequest(payload);
-                totalRecords = total;
+                const data = await makeRequest({ method: 'GET' });
                 Swal.close();
                 displayData(data);
                 updateCharts(data);
-                updatePagination();
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูล: ${error.message}`, 'error');
                 console.error('Load data error:', error);
             }
         }
 
+        // Display data in table
         function displayData(data) {
             const tableBody = document.getElementById('customerTable');
             tableBody.innerHTML = '';
-            if (data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">ไม่พบข้อมูล</td></tr>';
-                return;
-            }
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
                 tr.innerHTML = `
-                    <td class="border px-4 py-2">${item.first_name || ''}</td>
-                    <td class="border px-4 py-2">${item.last_name || ''}</td>
-                    <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : item.gender === 'female' ? 'หญิง' : ''}</td>
-                    <td class="border px-4 py-2">${item.member_type === 'member' ? 'ลูกค้าสมาชิก' : item.member_type === 'new' ? 'ลูกค้าใหม่' : ''}</td>
+                    <td class="border px-4 py-2">${item.first_name}</td>
+                    <td class="border px-4 py-2">${item.last_name}</td>
+                    <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
+                    <td class="border px-4 py-2">${Array.isArray(item.member_type) ? item.member_type.join(', ') : item.member_type || ''}</td>
                     <td class="border px-4 py-2">
-                        <button class="view-btn bg-green-500 hover:bg-green-600 text-white py-1 px-2 rounded">ดูข้อมูล</button>
+                        <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
                         <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
                     </td>
                 `;
-                tr.querySelector('.view-btn').addEventListener('click', () => viewCustomer(item.id));
+                tr.querySelector('.edit-btn').addEventListener('click', () => editCustomer(item.id));
                 tr.querySelector('.delete-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     deleteCustomer(item.id);
@@ -585,28 +400,22 @@
             });
         }
 
-        function updatePagination() {
-            const totalPages = Math.ceil(totalRecords / pageSize);
-            document.getElementById('pageInfo').textContent = `หน้า ${currentPage} จาก ${totalPages}`;
-            document.getElementById('prevPageBtn').disabled = currentPage === 1;
-            document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalRecords === 0;
-        }
-
+        // Update charts
         function updateCharts(data) {
             const genderCounts = { male: 0, female: 0 };
             const memberCounts = { member: 0, new: 0 };
             const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
 
             data.forEach(item => {
-                if (item.gender) genderCounts[item.gender]++;
-                if (item.member_type === 'member') memberCounts.member++;
-                if (item.member_type === 'new') memberCounts.new++;
-                if (item.age) {
-                    if (item.age <= 20) ageRanges['0-20']++;
-                    else if (item.age <= 40) ageRanges['21-40']++;
-                    else if (item.age <= 60) ageRanges['41-60']++;
-                    else ageRanges['61+']++;
+                genderCounts[item.gender]++;
+                if (Array.isArray(item.member_type)) {
+                    if (item.member_type.includes('member')) memberCounts.member++;
+                    if (item.member_type.includes('new')) memberCounts.new++;
                 }
+                if (item.age <= 20) ageRanges['0-20']++;
+                else if (item.age <= 40) ageRanges['21-40']++;
+                else if (item.age <= 60) ageRanges['41-60']++;
+                else ageRanges['61+']++;
             });
 
             if (genderChart) genderChart.destroy();
@@ -636,7 +445,7 @@
                 type: 'doughnut',
                 data: {
                     labels: ['จำนวนทั้งหมด'],
-                    datasets: [{ data: [totalRecords], backgroundColor: ['#6366F1'] }]
+                    datasets: [{ data: [data.length], backgroundColor: ['#6366F1'] }]
                 },
                 options: { plugins: { title: { display: true, text: 'จำนวนทั้งหมด' } } }
             });
@@ -651,65 +460,29 @@
             });
         }
 
-        function prepareFormData(formData) {
-            const data = Object.fromEntries(formData);
-            const arrayFields = ['frame_type', 'material_index', 'lens_option', 'lens_design', 'tint', 'treatment', 'wear_type'];
-            arrayFields.forEach(field => {
-                data[field] = formData.getAll(field).filter(val => val !== 'Other');
-                if (data[field].length === 0) data[field] = null; // Supabase expects null for empty arrays
-            });
-
-            // Handle "Other" fields
-            if (data.material_index_other) {
-                if (data.material_index) {
-                    data.material_index.push(data.material_index_other);
-                } else {
-                    data.material_index = [data.material_index_other];
-                }
-            }
-            if (data.lens_option_other) {
-                if (data.lens_option) {
-                    data.lens_option.push(data.lens_option_other);
-                } else {
-                    data.lens_option = [data.lens_option_other];
-                }
-            }
-            delete data.material_index_other;
-            delete data.lens_option_other;
-
-            // Convert numeric fields
-            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
-                data[key] = data[key] ? parseFloat(data[key]) : null;
-            });
-
-            // Ensure optional fields are null if empty
-            ['birth_date', 'phone', 'address', 'od_r_sphere', 'od_r_cyl', 'od_r_axis', 'od_r_add', 'od_r_dpd', 'od_r_npd', 'od_r_seght', 'od_r_prism', 'od_r_mono_va', 'od_l_sphere', 'od_l_cyl', 'od_l_axis', 'od_l_add', 'od_l_dpd', 'od_l_npd', 'od_l_seght', 'od_l_prism', 'od_l_mono_va', 'va_both_eyes', 'lens_old_r', 'lens_old_l', 'lens_type', 'tint_color', 'bvd', 'pta', 'wrap', 'bcl', 'frame_bridge', 'frame_height', 'frame_width', 'frame_diagonal', 'frame_brand', 'frame_model', 'notes', 'examiner', 'buyer'].forEach(key => {
-                if (!data[key]) data[key] = null;
-            });
-
-            // Remove id to prevent duplicate key errors
-            delete data.id;
-
-            return data;
-        }
-
+        // Handle form submission
         async function handleFormSubmit(e) {
             e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
             Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
 
             const formData = new FormData(e.target);
-            const data = prepareFormData(formData);
+            const data = Object.fromEntries(formData);
+            data.member_type = formData.getAll('member_type');
+            data.frame_type = formData.getAll('frame_type');
+            data.material_index = formData.getAll('material_index');
+            data.lens_option = formData.getAll('lens_option');
+            data.lens_design = formData.getAll('lens_design');
+            data.tint = formData.getAll('tint');
+            data.treatment = formData.getAll('treatment');
+            data.wear_type = formData.getAll('wear_type');
 
-            if (!data.first_name || !data.last_name || !data.member_type || !data.age || !data.gender || !data.phone || !data.address) {
-                Swal.fire('เกิดข้อผิดพลาด!', 'กรุณากรอกข้อมูลที่จำเป็น: ชื่อ, นามสกุล, ประเภทสมาชิก, อายุ, เพศ, เบอร์โทร, ที่อยู่', 'error');
-                submitBtn.disabled = false;
-                return;
-            }
+            // Convert numeric fields
+            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                if (data[key]) data[key] = parseFloat(data[key]);
+                else data[key] = null;
+            });
 
             try {
-                console.log('Submitting new record:', data);
                 const result = await makeRequest({ method: 'POST', data });
                 Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
                 closeModal();
@@ -717,73 +490,64 @@
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
                 console.error('Form submission error:', error);
-            } finally {
-                submitBtn.disabled = false;
             }
         }
 
-        async function viewCustomer(id) {
-            if (!id || isNaN(id)) {
-                Swal.fire('เกิดข้อผิดพลาด!', 'ID ไม่ถูกต้อง', 'error');
-                console.error('Invalid ID:', id);
-                return;
-            }
-            console.log('Viewing customer with ID:', id);
+        // Edit customer
+        async function editCustomer(id) {
             try {
                 const record = await makeRequest({ method: 'GET_BY_ID', id });
-                if (!record) {
-                    throw new Error('No record found for the given ID');
-                }
-                console.log('Fetched record for viewing:', record);
-                openModal(true, id);
+                openModal();
                 const form = document.getElementById('customerForm');
-                form.querySelector('[name="id"]').value = id;
-
-                form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-
                 Object.entries(record).forEach(([key, value]) => {
-                    if (key === 'member_type') {
-                        const input = form.querySelector(`input[name="member_type"][value="${value}"]`);
-                        if (input) input.checked = true;
-                    } else if (key === 'birth_date') {
-                        const input = form.querySelector(`[name="${key}"]`);
-                        if (input && value) {
-                            input.value = value;
-                            flatpickr("#birth_date", {
-                                dateFormat: "Y-m-d",
-                                defaultDate: value,
-                                locale: {
-                                    firstDayOfWeek: 1,
-                                    weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
-                                    months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.,', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
-                                },
-                                disableMobile: true
-                            });
-                        }
-                    } else if (key === 'material_index' || key === 'lens_option' || key === 'lens_design' || key === 'tint' || key === 'treatment' || key === 'wear_type' || key === 'frame_type') {
-                        if (Array.isArray(value)) {
-                            value.forEach(val => {
-                                const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
-                                if (input) {
-                                    input.checked = true;
-                                } else if (val && (key === 'material_index' || key === 'lens_option')) {
-                                    form.querySelector(`[name="${key}_other"]`).value = val;
-                                }
-                            });
-                        }
+                    if (Array.isArray(value)) {
+                        value.forEach(val => {
+                            const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
+                            if (input) input.checked = true;
+                        });
                     } else {
                         const input = form.querySelector(`[name="${key}"]`);
-                        if (input) input.value = value ?? '';
+                        if (input) input.value = value || '';
                     }
                 });
+
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+                    const formData = new FormData(e.target);
+                    const updatedData = Object.fromEntries(formData);
+                    updatedData.member_type = formData.getAll('member_type');
+                    updatedData.frame_type = formData.getAll('frame_type');
+                    updatedData.material_index = formData.getAll('material_index');
+                    updatedData.lens_option = formData.getAll('lens_option');
+                    updatedData.lens_design = formData.getAll('lens_design');
+                    updatedData.tint = formData.getAll('tint');
+                    updatedData.treatment = formData.getAll('treatment');
+                    updatedData.wear_type = formData.getAll('wear_type');
+
+                    // Convert numeric fields
+                    ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                        if (updatedData[key]) updatedData[key] = parseFloat(updatedData[key]);
+                        else updatedData[key] = null;
+                    });
+
+                    try {
+                        const result = await makeRequest({ method: 'PUT', id, data: updatedData });
+                        Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
+                        closeModal();
+                        loadData();
+                    } catch (error) {
+                        Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
+                        console.error('Edit customer error:', error);
+                    }
+                };
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลลูกค้า: ${error.message}`, 'error');
-                console.error('View customer error:', error);
+                console.error('Edit customer error:', error);
             }
         }
 
+        // Delete customer
         async function deleteCustomer(id) {
             Swal.fire({
                 title: 'ยืนยันการลบ?',
@@ -795,7 +559,6 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        console.log('Deleting customer with ID:', id);
                         const result = await makeRequest({ method: 'DELETE', id });
                         Swal.fire('สำเร็จ!', 'ลบข้อมูลเรียบร้อย', 'success');
                         loadData();
@@ -807,7 +570,9 @@
             });
         }
 
+        // Initialize app
         document.addEventListener('DOMContentLoaded', async () => {
+            // Ensure modal is hidden on page load
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
 
@@ -816,34 +581,10 @@
                 loadData();
             }, 1000);
 
-            document.getElementById('openModalBtn').addEventListener('click', () => openModal());
+            // Attach event listeners
+            document.getElementById('openModalBtn').addEventListener('click', openModal);
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
-
-            document.getElementById('searchBtn').addEventListener('click', () => {
-                searchQuery = document.getElementById('searchInput').value.trim();
-                currentPage = 1;
-                loadData();
-            });
-
-            document.getElementById('prevPageBtn').addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    loadData();
-                }
-            });
-            document.getElementById('nextPageBtn').addEventListener('click', () => {
-                const totalPages = Math.ceil(totalRecords / pageSize);
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    loadData();
-                }
-            });
-            document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
-                pageSize = parseInt(e.target.value);
-                currentPage = 1;
-                loadData();
-            });
         });
     </script>
 </body>
