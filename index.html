@@ -1,5 +1,4 @@
-<!—Customer-web—>
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -27,8 +26,8 @@
             max-height: 80vh; 
             overflow-y: auto; 
             width: 100%; 
-            max-width: 1000px; /* Increased for better form layout */
-            margin: 1rem; /* Ensure margin on small screens */
+            max-width: 1000px;
+            margin: 1rem;
         }
         #preloader { 
             position: fixed; 
@@ -52,6 +51,25 @@
             align-items: center; 
             gap: 0.5rem; 
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            background-color: #f9f9f9;
+        }
+        .pagination button:disabled {
+            background-color: #e5e5e5;
+            cursor: not-allowed;
+        }
+        .pagination button:hover:not(:disabled) {
+            background-color: #d1d5db;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -61,10 +79,37 @@
 
     <div class="container mx-auto p-6">
         <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ระบบจัดการข้อมูลแว่นตา</h1>
-        
-        <button id="openModalBtn" class="mb-6 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            เพิ่มข้อมูลลูกค้า
-        </button>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div><canvas id="genderChart"></canvas></div>
+            <div><canvas id="memberTypeChart"></canvas></div>
+            <div><canvas id="totalRecordsChart"></canvas></div>
+            <div><canvas id="ageRangeChart"></canvas></div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
+            <div class="flex gap-4 mb-4">
+                <input type="text" id="searchInput" class="w-full p-2 border rounded" placeholder="ค้นหาด้วยคำใดก็ได้...">
+                <button id="searchBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">ค้นหา</button>
+                <button id="openModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">เพิ่มข้อมูลลูกค้า</button>
+            </div>
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2">ชื่อ</th>
+                        <th class="px-4 py-2">สกุล</th>
+                        <th class="px-4 py-2">เพศ</th>
+                        <th class="px-4 py-2">ประเภทสมาชิก</th>
+                        <th class="px-4 py-2">การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTable"></tbody>
+            </table>
+            <div class="pagination" id="pagination"></div>
+        </div>
 
         <!-- Modal -->
         <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
@@ -85,7 +130,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium">วันเดือนปี</label>
-                                <input type="text" id="birth_date" class="flatpickr w-full p-2 border rounded">
+                                <input type="text" id="birth_date" name="birth_date" class="flatpickr w-full p-2 border rounded">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium">ชื่อ</label>
@@ -277,37 +322,14 @@
                 </form>
             </div>
         </div>
-
-        <!-- Charts -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div><canvas id="genderChart"></canvas></div>
-            <div><canvas id="memberTypeChart"></canvas></div>
-            <div><canvas id="totalRecordsChart"></canvas></div>
-            <div><canvas id="ageRangeChart"></canvas></div>
-        </div>
-
-        <!-- Data Table -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-2xl font-bold mb-4">รายการข้อมูลลูกค้า</h2>
-            <table class="w-full table-auto">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th class="px-4 py-2">ชื่อ</th>
-                        <th class="px-4 py-2">สกุล</th>
-                        <th class="px-4 py-2">เพศ</th>
-                        <th class="px-4 py-2">ประเภทสมาชิก</th>
-                        <th class="px-4 py-2">การดำเนินการ</th>
-                    </tr>
-                </thead>
-                <tbody id="customerTable"></tbody>
-            </table>
-        </div>
     </div>
 
     <script>
-        // Replace 'customer_crud' with the actual function name
         const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
         let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
+        let currentPage = 1;
+        const recordsPerPage = 25;
+        let allData = [];
 
         // Initialize Flatpickr
         flatpickr("#birth_date", {
@@ -361,31 +383,38 @@
         }
 
         // Load customer data
-        async function loadData() {
+        async function loadData(searchQuery = '') {
             Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
             try {
-                const data = await makeRequest({ method: 'GET' });
+                const payload = searchQuery ? { method: 'SEARCH', query: searchQuery } : { method: 'GET' };
+                const data = await makeRequest(payload);
+                allData = data;
                 Swal.close();
-                displayData(data);
-                updateCharts(data);
+                currentPage = 1;
+                displayData();
+                updateCharts(allData);
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูล: ${error.message}`, 'error');
                 console.error('Load data error:', error);
             }
         }
 
-        // Display data in table
-        function displayData(data) {
+        // Display data in table with pagination
+        function displayData() {
             const tableBody = document.getElementById('customerTable');
             tableBody.innerHTML = '';
-            data.forEach(item => {
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+            const paginatedData = allData.slice(start, end);
+
+            paginatedData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
                 tr.innerHTML = `
                     <td class="border px-4 py-2">${item.first_name}</td>
                     <td class="border px-4 py-2">${item.last_name}</td>
                     <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
-                    <td class="border px-4 py-2">${Array.isArray(item.member_type) ? item.member_type.join(', ') : item.member_type || ''}</td>
+                    <td class="border px-4 py-2">${Array.isArray(item.member_type) && item.member_type.length ? (item.member_type[0] === 'member' ? 'ลูกค้าสมาชิก' : 'ลูกค้าใหม่') : ''}</td>
                     <td class="border px-4 py-2">
                         <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
                         <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
@@ -398,6 +427,48 @@
                 });
                 tableBody.appendChild(tr);
             });
+
+            updatePagination();
+        }
+
+        // Update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(allData.length / recordsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'ก่อนหน้า';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayData();
+                }
+            });
+            pagination.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.disabled = i === currentPage;
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    displayData();
+                });
+                pagination.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'ถัดไป';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayData();
+                }
+            });
+            pagination.appendChild(nextButton);
         }
 
         // Update charts
@@ -408,9 +479,9 @@
 
             data.forEach(item => {
                 genderCounts[item.gender]++;
-                if (Array.isArray(item.member_type)) {
-                    if (item.member_type.includes('member')) memberCounts.member++;
-                    if (item.member_type.includes('new')) memberCounts.new++;
+                if (Array.isArray(item.member_type) && item.member_type.length) {
+                    if (item.member_type[0] === 'member') memberCounts.member++;
+                    if (item.member_type[0] === 'new') memberCounts.new++;
                 }
                 if (item.age <= 20) ageRanges['0-20']++;
                 else if (item.age <= 40) ageRanges['21-40']++;
@@ -486,7 +557,7 @@
                 const result = await makeRequest({ method: 'POST', data });
                 Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
                 closeModal();
-                loadData();
+                loadData(document.getElementById('searchInput').value);
             } catch (error) {
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
                 console.error('Form submission error:', error);
@@ -499,18 +570,36 @@
                 const record = await makeRequest({ method: 'GET_BY_ID', id });
                 openModal();
                 const form = document.getElementById('customerForm');
+
+                // Reset all radio buttons and checkboxes
+                form.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+                    input.checked = false;
+                });
+
+                // Populate form fields
                 Object.entries(record).forEach(([key, value]) => {
-                    if (Array.isArray(value)) {
+                    if (key === 'member_type') {
+                        if (Array.isArray(value) && value.length > 0) {
+                            const radio = form.querySelector(`input[name="member_type"][value="${value[0]}"]`);
+                            if (radio) radio.checked = true;
+                        }
+                    } else if (Array.isArray(value)) {
                         value.forEach(val => {
                             const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
                             if (input) input.checked = true;
                         });
+                    } else if (key === 'birth_date') {
+                        const birthDateInput = form.querySelector('#birth_date');
+                        if (birthDateInput && value) {
+                            birthDateInput._flatpickr.setDate(value, false);
+                        }
                     } else {
                         const input = form.querySelector(`[name="${key}"]`);
-                        if (input) input.value = value || '';
+                        if (input) input.value = value !== null && value !== undefined ? value : '';
                     }
                 });
 
+                // Update form submission for editing
                 form.onsubmit = async (e) => {
                     e.preventDefault();
                     Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
@@ -535,7 +624,7 @@
                         const result = await makeRequest({ method: 'PUT', id, data: updatedData });
                         Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
                         closeModal();
-                        loadData();
+                        loadData(document.getElementById('searchInput').value);
                     } catch (error) {
                         Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
                         console.error('Edit customer error:', error);
@@ -561,7 +650,7 @@
                     try {
                         const result = await makeRequest({ method: 'DELETE', id });
                         Swal.fire('สำเร็จ!', 'ลบข้อมูลเรียบร้อย', 'success');
-                        loadData();
+                        loadData(document.getElementById('searchInput').value);
                     } catch (error) {
                         Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถลบข้อมูล: ${error.message}`, 'error');
                         console.error('Delete customer error:', error);
@@ -570,9 +659,14 @@
             });
         }
 
+        // Handle search
+        function handleSearch() {
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            loadData(searchQuery);
+        }
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', async () => {
-            // Ensure modal is hidden on page load
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
 
@@ -581,10 +675,13 @@
                 loadData();
             }, 1000);
 
-            // Attach event listeners
             document.getElementById('openModalBtn').addEventListener('click', openModal);
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('searchBtn').addEventListener('click', handleSearch);
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
         });
     </script>
 </body>
