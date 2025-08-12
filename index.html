@@ -324,7 +324,7 @@
         </div>
     </div>
 
-    <!-- ส่วนที่เกี่ยวข้องใน <script> ของ index.html -->
+   <!-- ส่วนที่เกี่ยวข้องใน <script> ของ index.html -->
 <script>
   const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
   let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
@@ -395,35 +395,10 @@
     }
   }
 
-  // Check for duplicate customer before submitting
-  async function checkDuplicateCustomer(first_name, last_name, phone, excludeId = null) {
-    try {
-      const query = `${first_name} ${last_name} ${phone}`;
-      const payload = { method: 'SEARCH', query };
-      const customers = await makeRequest(payload);
-      if (excludeId) {
-        return customers.some(customer => 
-          customer.first_name === first_name &&
-          customer.last_name === last_name &&
-          customer.phone === phone &&
-          customer.id !== excludeId
-        );
-      }
-      return customers.some(customer => 
-        customer.first_name === first_name &&
-        customer.last_name === last_name &&
-        customer.phone === phone
-      );
-    } catch (error) {
-      console.error('Check duplicate error:', error);
-      return false; // Assume no duplicate if check fails
-    }
-  }
-
   // Handle form submission
   async function handleFormSubmit(e) {
     e.preventDefault();
-    Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading() });
 
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
@@ -441,18 +416,6 @@
       else data[key] = null;
     });
 
-    // Check for duplicates before submitting
-    const isDuplicate = await checkDuplicateCustomer(data.first_name, data.last_name, data.phone);
-    if (isDuplicate) {
-      Swal.fire({
-        title: 'ข้อมูลซ้ำ!',
-        text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือใช้ฟังก์ชันแก้ไขหากต้องการอัปเดต',
-        icon: 'warning',
-        confirmButtonText: 'ตกลง'
-      });
-      return;
-    }
-
     try {
       const result = await makeRequest({ method: 'POST', data });
       Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
@@ -462,7 +425,7 @@
       if (error.message === "มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว") {
         Swal.fire({
           title: 'ข้อมูลซ้ำ!',
-          text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือใช้ฟังก์ชันแก้ไขหากต้องการอัปเดต',
+          text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือก "แก้ไข" เพื่ออัปเดตข้อมูลลูกค้าที่มีอยู่',
           icon: 'warning',
           confirmButtonText: 'ตกลง'
         });
@@ -509,7 +472,7 @@
       form.onsubmit = null;
       form.onsubmit = async (e) => {
         e.preventDefault();
-        Swal.fire({ title: 'กำลังตรวจสอบข้อมูล...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังบันทึกการแก้ไข...', didOpen: () => Swal.showLoading() });
         const formData = new FormData(e.target);
         const updatedData = Object.fromEntries(formData);
         updatedData.member_type = [formData.get('member_type')].filter(Boolean);
@@ -526,18 +489,6 @@
           else updatedData[key] = null;
         });
 
-        // Check for duplicates before updating
-        const isDuplicate = await checkDuplicateCustomer(updatedData.first_name, updatedData.last_name, updatedData.phone, id);
-        if (isDuplicate) {
-          Swal.fire({
-            title: 'ข้อมูลซ้ำ!',
-            text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือกแก้ไข record อื่น',
-            icon: 'warning',
-            confirmButtonText: 'ตกลง'
-          });
-          return;
-        }
-
         try {
           const result = await makeRequest({ method: 'PUT', id, data: updatedData });
           Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
@@ -547,7 +498,7 @@
           if (error.message === "มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว") {
             Swal.fire({
               title: 'ข้อมูลซ้ำ!',
-              text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือกแก้ไข record อื่น',
+              text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือกแก้ไขข้อมูลลูกค้าอื่น',
               icon: 'warning',
               confirmButtonText: 'ตกลง'
             });
