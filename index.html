@@ -361,47 +361,38 @@
     form.onsubmit = handleFormSubmit;
   }
 
-  // Enhanced fetch with detailed error handling
-  async function makeRequest(payload) {
+ async function makeRequest(payload) {
     try {
-      const response = await fetch(SUPABASE_FUNCTIONS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) {
-        const text = await response.text();
-        try {
-          const errorData = JSON.parse(text);
-          if (response.status === 409 && errorData.error === "Customer with this name and phone already exists") {
-            throw new Error("มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว");
-          }
-          throw new Error(`HTTP error ${response.status}: ${response.statusText}. Response: ${text.substring(0, 100)}...`);
-        } catch (parseError) {
-          throw new Error(`HTTP error ${response.status}: ${response.statusText}. Response: ${text.substring(0, 100)}...`);
-        }
-      }
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Expected JSON, received ${contentType}: ${text.substring(0, 100)}...`);
-      }
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      return data;
-    } catch (error) {
-      console.error('Fetch error:', error);
-      throw error;
-    }
-  }
+        const response = await fetch(SUPABASE_FUNCTIONS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-  // Handle form submission
-  async function handleFormSubmit(e) {
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            const error = new Error(responseData.error || `HTTP error ${response.status}`);
+            error.status = response.status;
+            error.existingId = responseData.existingId;
+            throw error;
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error('Fetch error:', error);
+        throw error;
+    }
+}
+
+ async function handleFormSubmit(e) {
     e.preventDefault();
     Swal.fire({ title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading() });
 
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
+    
+    // แปลงข้อมูล checkbox และ radio ให้เป็น array
     data.member_type = [formData.get('member_type')].filter(Boolean);
     data.frame_type = formData.getAll('frame_type');
     data.material_index = formData.getAll('material_index');
@@ -411,30 +402,45 @@
     data.treatment = formData.getAll('treatment');
     data.wear_type = formData.getAll('wear_type');
 
-    ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
-      if (data[key]) data[key] = parseFloat(data[key]);
-      else data[key] = null;
+    // แปลงค่าตัวเลข
+    const numericFields = ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'];
+    numericFields.forEach(key => {
+        data[key] = data[key] ? parseFloat(data[key]) : null;
     });
 
-    try {
-      const result = await makeRequest({ method: 'POST', data });
-      Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
-      closeModal();
-      loadData(document.getElementById('searchInput').value);
-    } catch (error) {
-      if (error.message === "มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว") {
-        Swal.fire({
-          title: 'ข้อมูลซ้ำ!',
-          text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือก "แก้ไข" เพื่ออัปเดตข้อมูลลูกค้าที่มีอยู่',
-          icon: 'warning',
-          confirmButtonText: 'ตกลง'
-        });
-      } else {
-        Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
-      }
-      console.error('Form submission error:', error);
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!data.first_name || !data.last_name || !data.phone || !data.address || !data.gender) {
+        Swal.fire('ข้อมูลไม่ครบ!', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+        return;
     }
-  }
+
+    try {
+        const result = await makeRequest({ 
+            method: 'POST', 
+            data: {
+                ...data,
+                // แปลง birth_date ให้เป็นรูปแบบที่ถูกต้อง
+                birth_date: data.birth_date || null
+            }
+        });
+        
+        Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
+        closeModal();
+        loadData(document.getElementById('searchInput').value);
+    } catch (error) {
+        if (error.message.includes("409")) {
+            Swal.fire({
+                title: 'ข้อมูลซ้ำ!',
+                text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือก "แก้ไข" เพื่ออัปเดตข้อมูลลูกค้าที่มีอยู่',
+                icon: 'warning',
+                confirmButtonText: 'ตกลง'
+            });
+        } else {
+            Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
+        }
+        console.error('Form submission error:', error);
+    }
+}
 
   // Edit customer
   async function editCustomer(id) {
