@@ -370,7 +370,15 @@
                 });
                 if (!response.ok) {
                     const text = await response.text();
-                    throw new Error(`HTTP error ${response.status}: ${response.statusText}. Response: ${text.substring(0, 100)}...`);
+                    try {
+                        const errorData = JSON.parse(text);
+                        if (response.status === 409 && errorData.error === "Customer with this name and phone already exists") {
+                            throw new Error("มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว");
+                        }
+                        throw new Error(`HTTP error ${response.status}: ${response.statusText}. Response: ${text.substring(0, 100)}...`);
+                    } catch (parseError) {
+                        throw new Error(`HTTP error ${response.status}: ${response.statusText}. Response: ${text.substring(0, 100)}...`);
+                    }
                 }
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
@@ -566,7 +574,16 @@
                 closeModal();
                 loadData(document.getElementById('searchInput').value);
             } catch (error) {
-                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
+                if (error.message === "มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว") {
+                    Swal.fire({
+                        title: 'ข้อมูลซ้ำ!',
+                        text: 'มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว กรุณาตรวจสอบหรือแก้ไขข้อมูล',
+                        icon: 'warning',
+                        confirmButtonText: 'ตกลง'
+                    });
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
+                }
                 console.error('Form submission error:', error);
             }
         }
@@ -634,7 +651,16 @@
                         closeModal();
                         loadData(document.getElementById('searchInput').value);
                     } catch (error) {
-                        Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
+                        if (error.message === "มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว") {
+                            Swal.fire({
+                                title: 'ข้อมูลซ้ำ!',
+                                text: 'มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว กรุณาตรวจสอบหรือแก้ไขข้อมูล',
+                                icon: 'warning',
+                                confirmButtonText: 'ตกลง'
+                            });
+                        } else {
+                            Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
+                        }
                         console.error('Edit customer error:', error);
                     }
                 };
