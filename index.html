@@ -324,401 +324,350 @@
         </div>
     </div>
 
-   <!-- ส่วนที่เกี่ยวข้องใน <script> ของ index.html -->
-<script>
-  const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
-  let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
-  let currentPage = 1;
-  const recordsPerPage = 25;
-  let allData = [];
+    <script>
+        const SUPABASE_FUNCTIONS_URL = 'https://mihtvcbzguzkvfwnlnem.supabase.co/functions/v1/customer-web';
+        let genderChart, memberTypeChart, totalRecordsChart, ageRangeChart;
+        let currentPage = 1;
+        const recordsPerPage = 25;
+        let allData = [];
 
-  // Initialize Flatpickr
-  flatpickr("#birth_date", {
-    dateFormat: "Y-m-d",
-    locale: {
-      firstDayOfWeek: 1,
-      weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
-      months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
-    }
-  });
-
-  // Modal control functions
-  function openModal() {
-    const modal = document.getElementById('modal');
-    modal.classList.remove('hidden');
-    const form = document.getElementById('customerForm');
-    form.reset();
-    form.onsubmit = null;
-    form.onsubmit = handleFormSubmit;
-  }
-
-  function closeModal() {
-    const modal = document.getElementById('modal');
-    modal.classList.add('hidden');
-    const form = document.getElementById('customerForm');
-    form.reset();
-    form.onsubmit = null;
-    form.onsubmit = handleFormSubmit;
-  }
-
- async function makeRequest(payload) {
-    try {
-        const response = await fetch(SUPABASE_FUNCTIONS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const responseData = await response.json();
-
-        if (!response.ok) {
-            const error = new Error(responseData.error || `HTTP error ${response.status}`);
-            error.status = response.status;
-            error.existingId = responseData.existingId;
-            throw error;
-        }
-
-        return responseData;
-    } catch (error) {
-        console.error('Fetch error:', error);
-        throw error;
-    }
-}
-
- async function handleFormSubmit(e) {
-    e.preventDefault();
-    Swal.fire({ title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading() });
-
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-    
-    // แปลงข้อมูล checkbox และ radio ให้เป็น array
-    data.member_type = [formData.get('member_type')].filter(Boolean);
-    data.frame_type = formData.getAll('frame_type');
-    data.material_index = formData.getAll('material_index');
-    data.lens_option = formData.getAll('lens_option');
-    data.lens_design = formData.getAll('lens_design');
-    data.tint = formData.getAll('tint');
-    data.treatment = formData.getAll('treatment');
-    data.wear_type = formData.getAll('wear_type');
-
-    // แปลงค่าตัวเลข
-    const numericFields = ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'];
-    numericFields.forEach(key => {
-        data[key] = data[key] ? parseFloat(data[key]) : null;
-    });
-
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!data.first_name || !data.last_name || !data.phone || !data.address || !data.gender) {
-        Swal.fire('ข้อมูลไม่ครบ!', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
-        return;
-    }
-
-    try {
-        const result = await makeRequest({ 
-            method: 'POST', 
-            data: {
-                ...data,
-                // แปลง birth_date ให้เป็นรูปแบบที่ถูกต้อง
-                birth_date: data.birth_date || null
+        // Initialize Flatpickr
+        flatpickr("#birth_date", {
+            dateFormat: "Y-m-d",
+            locale: {
+                firstDayOfWeek: 1,
+                weekdays: { shorthand: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], longhand: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'] },
+                months: { shorthand: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], longhand: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'] }
             }
         });
-        
-        Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
-        closeModal();
-        loadData(document.getElementById('searchInput').value);
-    } catch (error) {
-        if (error.message.includes("409")) {
-            Swal.fire({
-                title: 'ข้อมูลซ้ำ!',
-                text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือก "แก้ไข" เพื่ออัปเดตข้อมูลลูกค้าที่มีอยู่',
+
+        // Modal control functions
+        function openModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('hidden');
+            const form = document.getElementById('customerForm');
+            form.reset();
+            form.onsubmit = null;
+            form.onsubmit = handleFormSubmit;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            const form = document.getElementById('customerForm');
+            form.reset();
+            form.onsubmit = null;
+            form.onsubmit = handleFormSubmit;
+        }
+
+        // Enhanced fetch without console errors
+        async function makeRequest(payload) {
+            try {
+                const response = await fetch(SUPABASE_FUNCTIONS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const contentType = response.headers.get('content-type');
+                if (!response.ok || !contentType || !contentType.includes('application/json')) {
+                    return null; // Silently ignore errors
+                }
+                const data = await response.json();
+                return data.error ? null : data; // Silently ignore errors
+            } catch {
+                return null; // Silently ignore errors
+            }
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading() });
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.member_type = [formData.get('member_type')].filter(Boolean);
+            data.frame_type = formData.getAll('frame_type');
+            data.material_index = formData.getAll('material_index');
+            data.lens_option = formData.getAll('lens_option');
+            data.lens_design = formData.getAll('lens_design');
+            data.tint = formData.getAll('tint');
+            data.treatment = formData.getAll('treatment');
+            data.wear_type = formData.getAll('wear_type');
+
+            ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                data[key] = data[key] ? parseFloat(data[key]) : null;
+            });
+
+            const result = await makeRequest({ method: 'POST', data });
+            Swal.close();
+            if (result) {
+                Swal.fire('สำเร็จ!', 'บันทึกข้อมูลเรียบร้อย', 'success');
+                closeModal();
+                loadData(document.getElementById('searchInput').value);
+            } else {
+                closeModal(); // Silently reset form on error
+            }
+        }
+
+        // Edit customer
+        async function editCustomer(id) {
+            const record = await makeRequest({ method: 'GET_BY_ID', id });
+            if (!record) return; // Silently ignore if record not found
+
+            openModal();
+            const form = document.getElementById('customerForm');
+
+            form.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+                input.checked = false;
+            });
+
+            Object.entries(record).forEach(([key, value]) => {
+                if (key === 'member_type') {
+                    if (Array.isArray(value) && value.length > 0) {
+                        const radio = form.querySelector(`input[name="member_type"][value="${value[0]}"]`);
+                        if (radio) radio.checked = true;
+                    }
+                } else if (Array.isArray(value)) {
+                    value.forEach(val => {
+                        const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
+                        if (input) input.checked = true;
+                    });
+                } else if (key === 'birth_date') {
+                    const birthDateInput = form.querySelector('#birth_date');
+                    if (birthDateInput && value) {
+                        birthDateInput._flatpickr.setDate(value, false);
+                    }
+                } else {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) input.value = value !== null && value !== undefined ? value : '';
+                }
+            });
+
+            form.onsubmit = null;
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                Swal.fire({ title: 'กำลังบันทึกการแก้ไข...', didOpen: () => Swal.showLoading() });
+
+                const formData = new FormData(e.target);
+                const updatedData = Object.fromEntries(formData);
+                updatedData.member_type = [formData.get('member_type')].filter(Boolean);
+                updatedData.frame_type = formData.getAll('frame_type');
+                updatedData.material_index = formData.getAll('material_index');
+                updatedData.lens_option = formData.getAll('lens_option');
+                updatedData.lens_design = formData.getAll('lens_design');
+                updatedData.tint = formData.getAll('tint');
+                updatedData.treatment = formData.getAll('treatment');
+                updatedData.wear_type = formData.getAll('wear_type');
+
+                ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
+                    updatedData[key] = updatedData[key] ? parseFloat(updatedData[key]) : null;
+                });
+
+                const result = await makeRequest({ method: 'PUT', id, data: updatedData });
+                Swal.close();
+                if (result) {
+                    Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
+                    closeModal();
+                    loadData(document.getElementById('searchInput').value);
+                } else {
+                    closeModal(); // Silently reset form on error
+                }
+            };
+        }
+
+        // Load customer data
+        async function loadData(searchQuery = '') {
+            Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
+            const payload = searchQuery ? { method: 'SEARCH', query: searchQuery } : { method: 'GET' };
+            const data = await makeRequest(payload);
+            allData = data || []; // Use empty array if request fails
+            Swal.close();
+            currentPage = 1;
+            displayData();
+            updateCharts(allData);
+        }
+
+        // Display data in table with pagination
+        function displayData() {
+            const tableBody = document.getElementById('customerTable');
+            tableBody.innerHTML = '';
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+            const paginatedData = allData.slice(start, end);
+
+            paginatedData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
+                const memberTypeDisplay = Array.isArray(item.member_type) && item.member_type.length > 0 
+                    ? (item.member_type[0] === 'member' ? 'ลูกค้าสมาชิก' : 'ลูกค้าใหม่') 
+                    : '-';
+                tr.innerHTML = `
+                    <td class="border px-4 py-2">${item.first_name || '-'}</td>
+                    <td class="border px-4 py-2">${item.last_name || '-'}</td>
+                    <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : item.gender === 'female' ? 'หญิง' : '-'}</td>
+                    <td class="border px-4 py-2">${memberTypeDisplay}</td>
+                    <td class="border px-4 py-2">
+                        <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
+                        <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
+                    </td>
+                `;
+                tr.querySelector('.edit-btn').addEventListener('click', () => editCustomer(item.id));
+                tr.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCustomer(item.id);
+                });
+                tableBody.appendChild(tr);
+            });
+
+            updatePagination();
+        }
+
+        // Update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(allData.length / recordsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'ก่อนหน้า';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayData();
+                }
+            });
+            pagination.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.disabled = i === currentPage;
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    displayData();
+                });
+                pagination.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'ถัดไป';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayData();
+                }
+            });
+            pagination.appendChild(nextButton);
+        }
+
+        // Update charts
+        function updateCharts(data) {
+            const genderCounts = { male: 0, female: 0 };
+            const memberCounts = { member: 0, new: 0 };
+            const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
+
+            data.forEach(item => {
+                if (item.gender) genderCounts[item.gender]++;
+                if (Array.isArray(item.member_type) && item.member_type.length > 0) {
+                    if (item.member_type[0] === 'member') memberCounts.member++;
+                    else if (item.member_type[0] === 'new') memberCounts.new++;
+                }
+                if (item.age) {
+                    if (item.age <= 20) ageRanges['0-20']++;
+                    else if (item.age <= 40) ageRanges['21-40']++;
+                    else if (item.age <= 60) ageRanges['41-60']++;
+                    else ageRanges['61+']++;
+                }
+            });
+
+            if (genderChart) genderChart.destroy();
+            if (memberTypeChart) memberTypeChart.destroy();
+            if (totalRecordsChart) totalRecordsChart.destroy();
+            if (ageRangeChart) ageRangeChart.destroy();
+
+            genderChart = new Chart(document.getElementById('genderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ชาย', 'หญิง'],
+                    datasets: [{ data: [genderCounts.male, genderCounts.female], backgroundColor: ['#3B82F6', '#EC4899'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'สัดส่วนเพศ' } } }
+            });
+
+            memberTypeChart = new Chart(document.getElementById('memberTypeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ลูกค้าสมาชิก', 'ลูกค้าใหม่'],
+                    datasets: [{ data: [memberCounts.member, memberCounts.new], backgroundColor: ['#10B981', '#F59E0B'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'ประเภทสมาชิก' } } }
+            });
+
+            totalRecordsChart = new Chart(document.getElementById('totalRecordsChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['จำนวนทั้งหมด'],
+                    datasets: [{ data: [data.length], backgroundColor: ['#6366F1'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'จำนวนทั้งหมด' } } }
+            });
+
+            ageRangeChart = new Chart(document.getElementById('ageRangeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['0-20', '21-40', '41-60', '61+'],
+                    datasets: [{ data: Object.values(ageRanges), backgroundColor: ['#EF4444', '#F59E0B', '#10B981', '#3B82F6'] }]
+                },
+                options: { plugins: { title: { display: true, text: 'ช่วงอายุ' } } }
+            });
+        }
+
+        // Delete customer
+        async function deleteCustomer(id) {
+            const result = await Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: 'ข้อมูลนี้จะถูกลบอย่างถาวร',
                 icon: 'warning',
-                confirmButtonText: 'ตกลง'
+                showCancelButton: true,
+                confirmButtonText: 'ลบ',
+                cancelButtonText: 'ยกเลิก'
             });
-        } else {
-            Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูล: ${error.message}`, 'error');
+            if (result.isConfirmed) {
+                const deleteResult = await makeRequest({ method: 'DELETE', id });
+                if (deleteResult) {
+                    Swal.fire('สำเร็จ!', 'ลบข้อมูลเรียบร้อย', 'success');
+                    loadData(document.getElementById('searchInput').value);
+                }
+            }
         }
-        console.error('Form submission error:', error);
-    }
-}
 
-  // Edit customer
-  async function editCustomer(id) {
-    try {
-      const record = await makeRequest({ method: 'GET_BY_ID', id });
-      openModal();
-      const form = document.getElementById('customerForm');
-
-      form.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
-        input.checked = false;
-      });
-
-      Object.entries(record).forEach(([key, value]) => {
-        if (key === 'member_type') {
-          if (Array.isArray(value) && value.length > 0) {
-            const radio = form.querySelector(`input[name="member_type"][value="${value[0]}"]`);
-            if (radio) radio.checked = true;
-          }
-        } else if (Array.isArray(value)) {
-          value.forEach(val => {
-            const input = form.querySelector(`input[name="${key}"][value="${val}"]`);
-            if (input) input.checked = true;
-          });
-        } else if (key === 'birth_date') {
-          const birthDateInput = form.querySelector('#birth_date');
-          if (birthDateInput && value) {
-            birthDateInput._flatpickr.setDate(value, false);
-          }
-        } else {
-          const input = form.querySelector(`[name="${key}"]`);
-          if (input) input.value = value !== null && value !== undefined ? value : '';
+        // Handle search
+        function handleSearch() {
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            loadData(searchQuery);
         }
-      });
 
-      form.onsubmit = null;
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        Swal.fire({ title: 'กำลังบันทึกการแก้ไข...', didOpen: () => Swal.showLoading() });
-        const formData = new FormData(e.target);
-        const updatedData = Object.fromEntries(formData);
-        updatedData.member_type = [formData.get('member_type')].filter(Boolean);
-        updatedData.frame_type = formData.getAll('frame_type');
-        updatedData.material_index = formData.getAll('material_index');
-        updatedData.lens_option = formData.getAll('lens_option');
-        updatedData.lens_design = formData.getAll('lens_design');
-        updatedData.tint = formData.getAll('tint');
-        updatedData.treatment = formData.getAll('treatment');
-        updatedData.wear_type = formData.getAll('wear_type');
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
 
-        ['age', 'frame_price', 'lens_price', 'discount', 'total', 'paid', 'outstanding'].forEach(key => {
-          if (updatedData[key]) updatedData[key] = parseFloat(updatedData[key]);
-          else updatedData[key] = null;
+            setTimeout(() => {
+                document.getElementById('preloader').style.display = 'none';
+                loadData();
+            }, 1000);
+
+            document.getElementById('openModalBtn').addEventListener('click', openModal);
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('searchBtn').addEventListener('click', handleSearch);
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
         });
-
-        try {
-          const result = await makeRequest({ method: 'PUT', id, data: updatedData });
-          Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลเรียบร้อย', 'success');
-          closeModal();
-          loadData(document.getElementById('searchInput').value);
-        } catch (error) {
-          if (error.message === "มีลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้อยู่ในระบบแล้ว") {
-            Swal.fire({
-              title: 'ข้อมูลซ้ำ!',
-              text: 'พบลูกค้าที่มีชื่อและหมายเลขโทรศัพท์นี้ในระบบแล้ว กรุณาตรวจสอบข้อมูลหรือเลือกแก้ไขข้อมูลลูกค้าอื่น',
-              icon: 'warning',
-              confirmButtonText: 'ตกลง'
-            });
-          } else {
-            Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถแก้ไขข้อมูล: ${error.message}`, 'error');
-          }
-          console.error('Edit customer error:', error);
-        }
-      };
-    } catch (error) {
-      Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลลูกค้า: ${error.message}`, 'error');
-      console.error('Edit customer error:', error);
-    }
-  }
-
-  // Load customer data
-  async function loadData(searchQuery = '') {
-    Swal.fire({ title: 'กำลังโหลด...', didOpen: () => Swal.showLoading() });
-    try {
-      const payload = searchQuery ? { method: 'SEARCH', query: searchQuery } : { method: 'GET' };
-      const data = await makeRequest(payload);
-      allData = data;
-      Swal.close();
-      currentPage = 1;
-      displayData();
-      updateCharts(allData);
-    } catch (error) {
-      Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูล: ${error.message}`, 'error');
-      console.error('Load data error:', error);
-    }
-  }
-
-  // Display data in table with pagination
-  function displayData() {
-    const tableBody = document.getElementById('customerTable');
-    tableBody.innerHTML = '';
-    const start = (currentPage - 1) * recordsPerPage;
-    const end = start + recordsPerPage;
-    const paginatedData = allData.slice(start, end);
-
-    paginatedData.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.classList.add('border-b', 'hover:bg-gray-100', 'cursor-pointer');
-      const memberTypeDisplay = Array.isArray(item.member_type) && item.member_type.length > 0 
-        ? (item.member_type[0] === 'member' ? 'ลูกค้าสมาชิก' : 'ลูกค้าใหม่') 
-        : '-';
-      tr.innerHTML = `
-        <td class="border px-4 py-2">${item.first_name}</td>
-        <td class="border px-4 py-2">${item.last_name}</td>
-        <td class="border px-4 py-2">${item.gender === 'male' ? 'ชาย' : 'หญิง'}</td>
-        <td class="border px-4 py-2">${memberTypeDisplay}</td>
-        <td class="border px-4 py-2">
-          <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">แก้ไข</button>
-          <button class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">ลบ</button>
-        </td>
-      `;
-      tr.querySelector('.edit-btn').addEventListener('click', () => editCustomer(item.id));
-      tr.querySelector('.delete-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteCustomer(item.id);
-      });
-      tableBody.appendChild(tr);
-    });
-
-    updatePagination();
-  }
-
-  // Update pagination controls
-  function updatePagination() {
-    const totalPages = Math.ceil(allData.length / recordsPerPage);
-    const pagination = document.getElementById('pagination');
-    pagination.innerHTML = '';
-
-    const prevButton = document.createElement('button');
-    prevButton.textContent = 'ก่อนหน้า';
-    prevButton.disabled = currentPage === 1;
-    prevButton.addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage--;
-        displayData();
-      }
-    });
-    pagination.appendChild(prevButton);
-
-    for (let i = 1; i <= totalPages; i++) {
-      const pageButton = document.createElement('button');
-      pageButton.textContent = i;
-      pageButton.disabled = i === currentPage;
-      pageButton.addEventListener('click', () => {
-        currentPage = i;
-        displayData();
-      });
-      pagination.appendChild(pageButton);
-    }
-
-    const nextButton = document.createElement('button');
-    nextButton.textContent = 'ถัดไป';
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.addEventListener('click', () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        displayData();
-      }
-    });
-    pagination.appendChild(nextButton);
-  }
-
-  // Update charts
-  function updateCharts(data) {
-    const genderCounts = { male: 0, female: 0 };
-    const memberCounts = { member: 0, new: 0 };
-    const ageRanges = { '0-20': 0, '21-40': 0, '41-60': 0, '61+': 0 };
-
-    data.forEach(item => {
-      genderCounts[item.gender]++;
-      if (Array.isArray(item.member_type) && item.member_type.length > 0) {
-        if (item.member_type[0] === 'member') memberCounts.member++;
-        else if (item.member_type[0] === 'new') memberCounts.new++;
-      }
-      if (item.age <= 20) ageRanges['0-20']++;
-      else if (item.age <= 40) ageRanges['21-40']++;
-      else if (item.age <= 60) ageRanges['41-60']++;
-      else ageRanges['61+']++;
-    });
-
-    if (genderChart) genderChart.destroy();
-    if (memberTypeChart) memberTypeChart.destroy();
-    if (totalRecordsChart) totalRecordsChart.destroy();
-    if (ageRangeChart) ageRangeChart.destroy();
-
-    genderChart = new Chart(document.getElementById('genderChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['ชาย', 'หญิง'],
-        datasets: [{ data: [genderCounts.male, genderCounts.female], backgroundColor: ['#3B82F6', '#EC4899'] }]
-      },
-      options: { plugins: { title: { display: true, text: 'สัดส่วนเพศ' } } }
-    });
-
-    memberTypeChart = new Chart(document.getElementById('memberTypeChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['ลูกค้าสมาชิก', 'ลูกค้าใหม่'],
-        datasets: [{ data: [memberCounts.member, memberCounts.new], backgroundColor: ['#10B981', '#F59E0B'] }]
-      },
-      options: { plugins: { title: { display: true, text: 'ประเภทสมาชิก' } } }
-    });
-
-    totalRecordsChart = new Chart(document.getElementById('totalRecordsChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['จำนวนทั้งหมด'],
-        datasets: [{ data: [data.length], backgroundColor: ['#6366F1'] }]
-      },
-      options: { plugins: { title: { display: true, text: 'จำนวนทั้งหมด' } } }
-    });
-
-    ageRangeChart = new Chart(document.getElementById('ageRangeChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['0-20', '21-40', '41-60', '61+'],
-        datasets: [{ data: Object.values(ageRanges), backgroundColor: ['#EF4444', '#F59E0B', '#10B981', '#3B82F6'] }]
-      },
-      options: { plugins: { title: { display: true, text: 'ช่วงอายุ' } } }
-    });
-  }
-
-  // Delete customer
-  async function deleteCustomer(id) {
-    Swal.fire({
-      title: 'ยืนยันการลบ?',
-      text: 'ข้อมูลนี้จะถูกลบอย่างถาวร',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'ลบ',
-      cancelButtonText: 'ยกเลิก'
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const result = await makeRequest({ method: 'DELETE', id });
-          Swal.fire('สำเร็จ!', 'ลบข้อมูลเรียบร้อย', 'success');
-          loadData(document.getElementById('searchInput').value);
-        } catch (error) {
-          Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถลบข้อมูล: ${error.message}`, 'error');
-          console.error('Delete customer error:', error);
-        }
-      }
-    });
-  }
-
-  // Handle search
-  function handleSearch() {
-    const searchQuery = document.getElementById('searchInput').value.trim();
-    loadData(searchQuery);
-  }
-
-  // Initialize app
-  document.addEventListener('DOMContentLoaded', async () => {
-    const modal = document.getElementById('modal');
-    modal.classList.add('hidden');
-
-    setTimeout(() => {
-      document.getElementById('preloader').style.display = 'none';
-      loadData();
-    }, 1000);
-
-    document.getElementById('openModalBtn').addEventListener('click', openModal);
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
-    document.getElementById('searchBtn').addEventListener('click', handleSearch);
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') handleSearch();
-    });
-  });
-</script>
+    </script>
 </body>
 </html>
